@@ -291,6 +291,15 @@
   .btn-download:hover { background: var(--brand-hover); }
   .btn-download:active{ background: var(--brand-pressed); }
   .btn-download:focus-visible{ outline: 2px solid #fff; outline-offset: 2px; }
+  
+    /* ---- 多按钮操作组：整体靠右，按钮等距排列 ---- */
+  .card-actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;              /* 按钮间距 */
+    margin-left: auto;     /* 把整组推到右侧 */
+    justify-content: flex-end;
+  }
 
   /* ========== 页脚 ========== */
   .page-footer{
@@ -337,7 +346,15 @@
       width: 100%;
       height: 40px;
     }
-
+    
+    /* 窄屏下操作组改为纵向铺满，避免三个按钮挤成一行 */
+    .card-actions{
+      flex-direction: column;
+      width: 100%;
+      margin-left: 0;
+      gap: 10px;
+    }
+    
     .page-footer{ padding: 16px 12px 24px; }
   }
 
@@ -434,18 +451,19 @@
         <div class="card-body">
           <div class="card-title-row">
             <h2 class="card-title">古云群晖五子棋</h2>
-            <span class="badge">v1.3.6</span>
+            <span class="badge">v1.3.6 / Web v1.0.0</span>
           </div>
           <p class="card-desc">
-            一个由已经弃疗的远古项目改造而来的五子棋游戏，支持人人对战、人机对战、禁手玩法等，还支持导入导出棋局。<br>
-            至少能玩，最重要的是巨小.。。。。然后没了
+            一个由已经弃疗的远古项目改造而来的五子棋游戏，支持人人对战、人机对战、禁手玩法等，还支持导入导出棋局(仅EXE版)。<br>
+            通过强大的 Vibe Coding 技术搞出了2个网页版本，界面更美观，人机更强，点击即玩，无需下载🎉
           </p>
           <div class="card-footer">
             <ul class="card-meta">
-              <li>Windows</li>
+              <li>Windows · Web</li>
               <li>小于 1 MB</li>
-              <li>更新于 2026-11-18</li>
+              <li>更新于 2026-11-22</li>
             </ul>
+            <div class="card-actions">
             <a class="btn-download" href="群晖五子棋1.3.6.exe" download>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -455,6 +473,23 @@
               </svg>
               下载
             </a>
+            <a class="btn-download" href="gomoku-web-i/" target="_blank" rel="noopener noreferrer">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M8 16 16 8"/>
+				<path d="M9 8h7v7"/>
+			</svg>
+              打开网页版-I
+            </a>
+            <a class="btn-download" href="gomoku-web-ii/" target="_blank" rel="noopener noreferrer">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M8 16 16 8"/>
+				<path d="M9 8h7v7"/>
+			</svg>
+              打开网页版-II
+            </a>
+            </div>
           </div>
         </div>
       </article>

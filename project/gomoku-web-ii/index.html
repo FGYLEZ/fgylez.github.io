@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4e342e">
+<title>古云群晖五子棋Web版 II</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --brown-900: #3e2723;
+    --brown-800: #4e342e;
+    --brown-700: #5d4037;
+    --brown-600: #6d4c41;
+    --brown-500: #795548;
+    --brown-100: #efebe9;
+    --brown-50:  #faf7f5;
+    --accent:    #ff9800;
+    --shadow-1: 0 1px 3px rgba(0,0,0,.14), 0 1px 2px rgba(0,0,0,.10);
+    --shadow-2: 0 3px 8px rgba(0,0,0,.16), 0 1px 3px rgba(0,0,0,.12);
+    --shadow-3: 0 8px 22px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.12);
+  }
+
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100%;
+  }
+
+  body {
+    font-family: "Roboto", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(160deg, #f7f3ee 0%, #ede5dc 55%, #e3d8cc 100%);
+    background-attachment: fixed;
+    color: var(--brown-900);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body.modal-open { overflow: hidden; }
+
+  .app-bar {
+    position: sticky; top: 0; z-index: 40;
+    background: linear-gradient(135deg, #4e342e 0%, #5d4037 60%, #6d4c41 100%);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,.28);
+    padding: 0 16px;
+    height: 58px;
+    display: flex; align-items: center;
+    gap: 12px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0; flex: 1;
+  }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 50%;
+    flex: 0 0 auto;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.22);
+    display: grid; place-items: center;
+    font-size: 17px; font-weight: 700; letter-spacing: 0;
+    color: #ffd54f;
+  }
+  .brand h1 {
+    font-size: 17px; font-weight: 500; margin: 0;
+    letter-spacing: .5px;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .app-bar-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: .4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .22s, border-color .22s, color .22s, box-shadow .22s, transform .08s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app-bar-btn:hover { background: rgba(255,255,255,.2); }
+  .app-bar-btn:active { transform: scale(.97); }
+  .app-bar-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+  .app-bar-btn.active {
+    background: rgba(255,213,79,.22);
+    border-color: rgba(255,213,79,.55);
+    color: #ffe082;
+    box-shadow: 0 0 0 3px rgba(255,213,79,.10);
+  }
+
+  .layout {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: var(--shadow-2);
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    margin: 0 0 14px;
+    color: var(--brown-700);
+    text-transform: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 4px; height: 15px; border-radius: 2px;
+    background: var(--brown-500);
+  }
+
+  .board-card { padding: 14px 14px 12px; }
+
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2px 4px 12px;
+    gap: 10px;
+  }
+  .turn {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 15px; font-weight: 500; color: var(--brown-800);
+    min-width: 0;
+  }
+  .turn #turnText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    flex: 0 0 auto;
+    transition: background .25s;
+  }
+  .dot.black { background: radial-gradient(circle at 32% 28%, #6a6a6a, #101010 72%); }
+  .dot.white { background: radial-gradient(circle at 32% 28%, #fff, #c4c4c4 80%); box-shadow: inset 0 0 0 1px #cfcfcf; }
+  .dot.draw  { background: linear-gradient(135deg, #bdbdbd, #8d8d8d); }
+
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .difficulty-badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    white-space: nowrap;
+    background: var(--brown-100);
+    color: var(--brown-600);
+    transition: background .25s, color .25s, box-shadow .25s;
+  }
+  .difficulty-badge.pvp {
+    background: var(--brown-100);
+    color: var(--brown-600);
+  }
+  .difficulty-badge.easy {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .difficulty-badge.normal {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .difficulty-badge.hard {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  .difficulty-badge.hell {
+    background: #ffebee;
+    color: #c62828;
+    box-shadow: 0 0 0 1px rgba(198,40,40,.20);
+  }
+
+  .timer {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 15px; font-weight: 600;
+    color: var(--brown-600);
+    font-variant-numeric: tabular-nums;
+    background: var(--brown-100);
+    padding: 5px 12px; border-radius: 20px;
+    flex: 0 0 auto;
+  }
+  .timer svg { width: 15px; height: 15px; }
+
+  .board-wrap {
+    display: flex; justify-content: center;
+    padding: 4px;
+  }
+
+  #board {
+    display: block;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(62, 39, 35, .30), 0 0 0 1px rgba(62,39,35,.12);
+    touch-action: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding-top: 14px;
+    justify-content: center;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .4px;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 22px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--brown-700);
+    transition: background .2s, box-shadow .2s, transform .08s, opacity .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn:disabled { opacity: .38; cursor: not-allowed; transform: none; }
+
+  .btn-primary {
+    background: var(--brown-500);
+    color: #fff;
+    box-shadow: var(--shadow-2);
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--brown-600); box-shadow: var(--shadow-3); }
+
+  .btn-outline {
+    border: 1px solid rgba(93,64,55,.35);
+    color: var(--brown-700);
+  }
+  .btn-outline:hover:not(:disabled) { background: rgba(93,64,55,.07); }
+
+  .btn-text { color: var(--brown-600); }
+  .btn-text:hover:not(:disabled) { background: rgba(93,64,55,.07); }
+
+  .btn-danger {
+    background: #c62828;
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(198,40,40,.30), 0 1px 3px rgba(0,0,0,.16);
+  }
+  .btn-danger:hover:not(:disabled) { background: #b71c1c; box-shadow: 0 5px 14px rgba(198,40,40,.36); }
+
+  .side { display: flex; flex-direction: column; gap: 16px; }
+
+  .scores {
+    display: flex; align-items: flex-start; justify-content: space-around;
+  }
+  .score-item { text-align: center; flex: 1; min-width: 0; }
+  .stone {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-block; margin-bottom: 6px;
+  }
+  .stone.black { background: radial-gradient(circle at 32% 28%, #6a6a6a, #0d0d0d 72%); box-shadow: 0 2px 5px rgba(0,0,0,.35); }
+  .stone.white { background: radial-gradient(circle at 32% 28%, #fff, #c4c4c4 80%); box-shadow: inset 0 0 0 1px #d5d5d5, 0 2px 5px rgba(0,0,0,.18); }
+  .score-val {
+    font-size: 26px; font-weight: 700; color: var(--brown-800);
+    font-variant-numeric: tabular-nums; line-height: 1.15;
+  }
+  .score-name { font-size: 12px; color: #9e8f86; margin-top: 2px; letter-spacing: .5px; }
+  .score-round {
+    font-size: 11px;
+    color: #b0a29a;
+    margin-top: 4px;
+    letter-spacing: .3px;
+    font-variant-numeric: tabular-nums;
+    transition: color .2s;
+  }
+  .score-round.earned {
+    color: #e67e22;
+    font-weight: 600;
+  }
+  .score-divider { width: 1px; height: 66px; background: #ece4de; margin-top: 6px; flex: 0 0 auto; }
+
+  .rules {
+    margin: 0; padding-left: 18px;
+    font-size: 12.5px; line-height: 1.85; color: #8d7b70;
+  }
+  .rules li { margin-bottom: 2px; }
+  .rules li.hell-rule { color: #b23a3a; }
+
+  .field { margin-bottom: 16px; }
+  .field:last-of-type { margin-bottom: 0; }
+  .field-label {
+    font-size: 12.5px; font-weight: 600; letter-spacing: .5px;
+    color: #8d7b70; margin-bottom: 8px;
+  }
+  .field-hint { font-size: 11.5px; color: #b0a29a; margin-top: 3px; }
+
+  .segmented {
+    display: flex;
+    background: var(--brown-100);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .segmented button {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--brown-600);
+    padding: 9px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .22s, color .22s, box-shadow .22s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .segmented button.active {
+    background: var(--brown-500);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(93,64,55,.35);
+  }
+
+  .segmented button.seg-hell { color: #c62828; }
+  .segmented button.seg-hell.active {
+    background: #c62828;
+    color: #fff;
+    box-shadow: 0 2px 7px rgba(198,40,40,.42);
+  }
+
+  .segmented-4 button { padding: 9px 2px; }
+
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; padding-top: 16px; margin-top: 4px;
+    border-top: 1px solid #f0e9e3;
+  }
+
+  .switch { position: relative; display: inline-block; width: 46px; height: 25px; flex: 0 0 auto; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #d6cec9; border-radius: 25px;
+    transition: background .3s; cursor: pointer;
+  }
+  .slider::before {
+    content: ''; position: absolute;
+    height: 19px; width: 19px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,.32);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  .switch input:checked + .slider { background: var(--brown-500); }
+  .switch input:checked + .slider::before { transform: translateX(21px); }
+
+  .rules-block {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #f0e9e3;
+  }
+  .rules-block .field-label {
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .rules-block .field-label::before {
+    content: '';
+    width: 3px; height: 12px; border-radius: 2px;
+    background: var(--brown-500);
+  }
+  .rules-compact {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #8d7b70;
+    list-style: disc;
+  }
+  .rules-compact li { margin-bottom: 4px; }
+  .rules-compact li:last-child { margin-bottom: 0; }
+  .rules-compact b {
+    color: var(--brown-700);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .rules-compact li.hell-rule { color: #b23a3a; }
+  .rules-compact li.hell-rule b { color: #c62828; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(38, 22, 12, .48);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.is-open {
+    display: flex;
+    animation: overlayIn .22s ease-out;
+  }
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 400px;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.32), 0 4px 12px rgba(0,0,0,.18);
+    animation: modalIn .26s cubic-bezier(.34, 1.28, .64, 1);
+    overflow: hidden;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(14px) scale(.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px 10px;
+    flex: 0 0 auto;
+  }
+  .modal-head .card-title { margin-bottom: 0; }
+
+  .modal-close {
+    flex: 0 0 auto;
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #9e8f86;
+    cursor: pointer;
+    transition: background .2s, color .2s, transform .08s;
+  }
+  .modal-close:hover { background: rgba(93,64,55,.09); color: var(--brown-700); }
+  .modal-close:active { transform: scale(.9); }
+  .modal-close svg { width: 20px; height: 20px; }
+
+  .modal-body {
+    padding: 4px 18px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  #hellOverlay { z-index: 140; background: rgba(30, 8, 8, .58); }
+
+  .modal-hell .modal-head .card-title { color: #c62828; }
+  .modal-hell .modal-head .card-title::before { background: #c62828; }
+
+  .hell-warning {
+    background: linear-gradient(135deg, #fff6f5 0%, #ffecec 100%);
+    border: 1px solid #ffcdd2;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .hell-warning p {
+    margin: 0 0 9px;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #8d3a3a;
+  }
+  .hell-warning p:last-child { margin-bottom: 0; }
+
+  .hell-quote {
+    display: block;
+    margin: 10px 0 0;
+    padding: 11px 13px;
+    background: #fff;
+    border-left: 3px solid #c62828;
+    border-radius: 0 8px 8px 0;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #b23a3a;
+  }
+  .hell-quote + .hell-quote { margin-top: 8px; }
+  .hell-quote b { color: #c62828; }
+
+  .hell-bonus {
+    margin-top: 10px;
+    padding: 11px 13px;
+    background: #fff;
+    border: 1px dashed #ef9a9a;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #8d3a3a;
+  }
+  .hell-bonus b { color: #c62828; }
+
+  .hell-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .hell-actions .btn { flex: 0 0 auto; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 34px;
+    transform: translate(-50%, 24px);
+    background: rgba(62, 39, 35, .95);
+    color: #fff;
+    padding: 13px 24px;
+    border-radius: 26px;
+    font-size: 13.5px;
+    letter-spacing: .3px;
+    box-shadow: var(--shadow-3);
+    opacity: 0; pointer-events: none;
+    transition: opacity .28s, transform .28s;
+    z-index: 200;
+    max-width: 84vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 880px) {
+    .layout {
+      grid-template-columns: 1fr;
+      padding: 12px;
+      gap: 12px;
+    }
+    .app-bar { height: 54px; padding: 0 12px; gap: 8px; }
+    .brand h1 { font-size: 15px; }
+    .brand-mark { width: 30px; height: 30px; font-size: 15px; }
+    .app-bar-btn { height: 34px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+    .app-bar-btn svg { width: 16px; height: 16px; }
+    .card { border-radius: 14px; padding: 14px; }
+    .board-card { padding: 12px 12px 10px; }
+    .side { order: 2; }
+    .btn { padding: 10px 16px; font-size: 13px; flex: 1; min-width: 96px; }
+    .actions { gap: 6px; }
+    .hell-actions .btn { flex: 1; min-width: 0; }
+  }
+
+  @media (max-width: 600px) {
+    .status-bar { gap: 8px; }
+    .status-right { gap: 6px; }
+    .difficulty-badge {
+      height: 26px;
+      padding: 0 8px;
+      font-size: 11px;
+    }
+    .timer {
+      padding: 4px 9px;
+      font-size: 14px;
+    }
+    .timer svg { width: 13px; height: 13px; }
+
+    .modal-overlay {
+      align-items: flex-end;
+      padding: 0;
+    }
+    .modal {
+      max-width: none;
+      max-height: 88vh;
+      max-height: 88dvh;
+      border-radius: 20px 20px 0 0;
+      animation: modalSheetIn .28s cubic-bezier(.32, 1.1, .6, 1);
+    }
+    @keyframes modalSheetIn {
+      from { opacity: .6; transform: translateY(100%); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal-head { padding: 16px 16px 8px; }
+    .modal-body { padding: 2px 16px 22px; }
+
+    .hell-actions { flex-direction: column; }
+    .hell-actions .btn { width: 100%; flex: none; }
+  }
+
+  @media (max-width: 400px) {
+    .app-bar-btn span { display: none; }
+    .app-bar-btn { padding: 0 10px; }
+    .segmented button { font-size: 11.5px; padding: 8px 2px; }
+    .segmented-4 button { font-size: 11px; padding: 8px 1px; }
+    .score-val { font-size: 22px; }
+
+    .difficulty-badge {
+      height: 24px;
+      padding: 0 7px;
+      font-size: 10.5px;
+    }
+    .timer {
+      padding: 4px 8px;
+      font-size: 13px;
+      gap: 4px;
+    }
+    .turn { font-size: 14px; gap: 7px; }
+    .dot { width: 16px; height: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-overlay.is-open, .modal { animation: none !important; }
+    * { transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <div class="brand">
+    <span class="brand-mark">⚪</span>
+    <h1>古云群晖五子棋Web版 II</h1>
+  </div>
+  <button class="app-bar-btn" id="btnSettingsToggle" type="button"
+          aria-expanded="false" aria-controls="settingsOverlay" aria-label="对局设置">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+    </svg>
+    <span>对局设置</span>
+  </button>
+</header>
+
+<main class="layout">
+  <section class="card board-card">
+    <div class="status-bar">
+      <div class="turn">
+        <span class="dot black" id="turnDot"></span>
+        <span id="turnText">黑棋回合</span>
+      </div>
+      <div class="status-right">
+        <span class="difficulty-badge normal" id="difficultyBadge" aria-label="当前对局难度">普通</span>
+        <div class="timer">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.1.8-1.3-4.5-2.7V7z"/></svg>
+          <span id="timerText">00:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="board-wrap" id="boardWrap">
+      <canvas id="board"></canvas>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btnRestart">重新开始</button>
+      <button class="btn btn-outline" id="btnUndo">悔棋</button>
+      <button class="btn btn-text" id="btnResetScore">重置积分</button>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="card">
+      <h2 class="card-title">积分榜</h2>
+      <div class="scores">
+        <div class="score-item">
+          <span class="stone black"></span>
+          <div class="score-val" id="scoreBlack">0</div>
+          <div class="score-name">黑方 · 总分</div>
+          <div class="score-round" id="roundBlack">本局 0</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-item">
+          <span class="stone white"></span>
+          <div class="score-val" id="scoreWhite">0</div>
+          <div class="score-name">白方 · 总分</div>
+          <div class="score-round" id="roundWhite">本局 0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">规则说明</h2>
+      <ul class="rules">
+        <li>黑棋先行，任意一方先连成五子即获胜。</li>
+        <li>总落子数达到 100 手时自动判为平局。</li>
+        <li>开启禁手后，黑棋不得落子于三三、四四、长连点。</li>
+        <li>获胜方每局 +10 分；平局双方各 +5 分。</li>
+        <li>悔棋从本局已获积分中扣 1 分，不扣历史积分。</li>
+        <li class="hell-rule">地狱难度：玩家悔棋不扣分；玩家获胜 +50 分。</li>
+        <li class="hell-rule">地狱难度：玩家失败 -5 分（积分为 0 时不再扣分）；平局双方均不加分；AI 失败不扣分。</li>
+      </ul>
+    </section>
+  </aside>
+</main>
+
+<div class="modal-overlay" id="settingsOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-head">
+      <h2 class="card-title" id="settingsModalTitle">对局设置</h2>
+      <button class="modal-close" id="btnCloseSettings" type="button" aria-label="关闭对局设置">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <div class="field-label">对战模式</div>
+        <div class="segmented" data-group="mode">
+          <button type="button" data-value="pvp" class="active">人人对战</button>
+          <button type="button" data-value="pve">人机对战</button>
+        </div>
+      </div>
+
+      <div class="field" id="rowDifficulty" style="display:none">
+        <div class="field-label">电脑难度</div>
+        <div class="segmented segmented-4" data-group="difficulty">
+          <button type="button" data-value="easy">简单</button>
+          <button type="button" data-value="normal" class="active">普通</button>
+          <button type="button" data-value="hard">困难</button>
+          <button type="button" data-value="hell" class="seg-hell">地狱</button>
+        </div>
+        <div class="field-hint">「地狱」难度需先确认免责声明</div>
+      </div>
+
+      <div class="field" id="rowFirst" style="display:none">
+        <div class="field-label">先手方</div>
+        <div class="segmented" data-group="first">
+          <button type="button" data-value="human" class="active">玩家先手</button>
+          <button type="button" data-value="ai">电脑先手</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">棋盘尺寸</div>
+        <div class="segmented" data-group="size">
+          <button type="button" data-value="10">10×10</button>
+          <button type="button" data-value="12">12×12</button>
+          <button type="button" data-value="15" class="active">15×15</button>
+        </div>
+      </div>
+
+      <div class="switch-row">
+        <div>
+          <div class="field-label" style="margin-bottom:0">禁手规则</div>
+          <div class="field-hint">黑棋三三 / 四四 / 长连禁手（默认关闭）</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="chkForbidden">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="rules-block">
+        <div class="field-label">积分规则</div>
+        <ul class="rules-compact">
+          <li>获胜方每局 <b>+10</b> 分；平局双方各 <b>+5</b> 分。</li>
+          <li>每次悔棋扣 <b>1</b> 分，仅从本局已获得积分中扣除，扣完即止。</li>
+          <li>本局积分为 <b>0</b> 时不再扣分，且不扣除历史积分。</li>
+          <li class="hell-rule">地狱难度：玩家悔棋<b>不扣分</b>；玩家获胜 <b>+50</b> 分；玩家失败 <b>-5</b> 分（积分为 0 时不再扣分）。</li>
+          <li class="hell-rule">地狱难度：平局双方均不加分；AI 失败不扣分。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="hellOverlay" aria-hidden="true">
+  <div class="modal modal-hell" role="alertdialog" aria-modal="true" aria-labelledby="hellTitle">
+    <div class="modal-head">
+      <h2 class="card-title" id="hellTitle">地狱难度 · 免责声明</h2>
+      <button class="modal-close" id="btnCloseHell" type="button" aria-label="关闭免责声明">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="hell-warning">
+        <p><b>请注意：</b>你即将挑战地狱难度。该难度下的电脑棋力极强，可能持续压制、被虐爆，请确保心态稳定。</p>
+        <p>它不会给你任何喘息的机会，也不保证你能体面地走完一盘棋。</p>
+        <span class="hell-quote">“<b>根本没有这样的人机</b>。”——直到它坐到了你对面。</span>
+        <span class="hell-quote">“<b>总算知道柯洁当年有多崩溃了</b>。”</span>
+        <div class="hell-bonus">
+          地狱难度规则：你<b>悔棋不扣分</b>；获胜 <b>+50</b> 分；失败 <b>-5</b> 分（积分为 0 时不再扣分）；平局双方均不加分。
+        </div>
+      </div>
+
+      <div class="hell-actions">
+        <button class="btn btn-outline" id="btnHellBack" type="button">返回</button>
+        <button class="btn btn-danger" id="btnHellContinue" type="button">继续挑战</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+  // 提高棋型评分差距；FIVE_SCORE 保持 1000000
+  const WINDOW_SCORE = [0, 1, 35, 900, 100000, 1000000];
+  const FIVE_SCORE   = WINDOW_SCORE[5];
+  const MAX_MOVES    = 100;
+
+  const WIN_POINTS        = 10;
+  const DRAW_POINTS       = 5;
+  const UNDO_COST         = 1;
+  const HELL_WIN_POINTS   = 50;
+  const HELL_LOSE_PENALTY = 5;
+
+  const SCORE_KEY    = 'guyun_gomoku_scores_v1';
+  const SETTINGS_KEY = 'guyun_gomoku_settings_open_v1';
+
+  const DIFFICULTY_LABELS = {
+    easy: '简单',
+    normal: '普通',
+    hard: '困难',
+    hell: '地狱'
+  };
+
+  const state = {
+    size: 15,
+    board: [],
+    moves: [],
+    current: 1,
+    mode: 'pvp',
+    difficulty: 'normal',
+    firstPlayer: 'human',
+    humanColor: 0,
+    forbidden: false,
+    gameOver: false,
+    winner: 0,
+    winLine: null,
+    aiThinking: false,
+    roundId: 0,
+    scores: { 1: 0, 2: 0 },
+    roundPoints: { 1: 0, 2: 0 },
+    timer: { elapsed: 0, startTs: 0, id: null, running: false }
+  };
+
+  function isHellPve() {
+    return state.mode === 'pve' && state.difficulty === 'hell';
+  }
+
+  /* ========================================================
+     Canvas
+     ======================================================== */
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  let boardPx = 0, cellSize = 0, margin = 0, dpr = 1;
+  let grain = [];
+
+  function generateGrain() {
+    grain = [];
+    let seed = 20240613;
+    const rnd = () => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+    for (let i = 0; i < 26; i++) {
+      const y = rnd();
+      grain.push({
+        x1: -0.02, y1: y,
+        c1x: 0.32, c1y: y + (rnd() - 0.5) * 0.20,
+        c2x: 0.68, c2y: y + (rnd() - 0.5) * 0.20,
+        x2: 1.02, y2: y + (rnd() - 0.5) * 0.12
+      });
+    }
+  }
+
+  function resizeCanvas() {
+    const wrap = document.getElementById('boardWrap');
+    const availW = Math.max(240, wrap.clientWidth - 8);
+    const availH = window.innerHeight * 0.68;
+    let S = Math.min(availW, availH, 620);
+    S = Math.max(S, 250);
+    S = Math.round(S);
+
+    boardPx = S;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = Math.round(S * dpr);
+    canvas.height = Math.round(S * dpr);
+    canvas.style.width  = S + 'px';
+    canvas.style.height = S + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    cellSize = S / (state.size + 1);
+    margin = cellSize;
+
+    generateGrain();
+    draw();
+  }
+
+  function draw() {
+    if (!boardPx) return;
+    const S = boardPx;
+    const n = state.size;
+
+    ctx.clearRect(0, 0, S, S);
+
+    const bg = ctx.createLinearGradient(0, 0, S, S);
+    bg.addColorStop(0,    '#e3bd85');
+    bg.addColorStop(0.42, '#d3a468');
+    bg.addColorStop(1,    '#b98a51');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, S, S);
+
+    ctx.save();
+    ctx.globalAlpha = 0.075;
+    ctx.strokeStyle = '#4a2c0c';
+    ctx.lineWidth = Math.max(1, S * 0.007);
+    ctx.lineCap = 'round';
+    for (const ln of grain) {
+      ctx.beginPath();
+      ctx.moveTo(ln.x1 * S, ln.y1 * S);
+      ctx.bezierCurveTo(ln.c1x * S, ln.c1y * S, ln.c2x * S, ln.c2y * S, ln.x2 * S, ln.y2 * S);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const hl = ctx.createRadialGradient(S * 0.3, S * 0.2, 0, S * 0.3, S * 0.2, S * 0.9);
+    hl.addColorStop(0, 'rgba(255,255,255,0.20)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hl;
+    ctx.fillRect(0, 0, S, S);
+
+    const gridEnd = margin + (n - 1) * cellSize;
+    ctx.strokeStyle = 'rgba(72, 43, 16, 0.72)';
+    ctx.lineWidth = Math.max(1, S * 0.0022);
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const p = margin + i * cellSize;
+      ctx.moveTo(margin, p); ctx.lineTo(gridEnd, p);
+      ctx.moveTo(p, margin); ctx.lineTo(p, gridEnd);
+    }
+    ctx.stroke();
+
+    ctx.lineWidth = Math.max(1.6, S * 0.004);
+    ctx.strokeStyle = 'rgba(62, 37, 12, 0.85)';
+    ctx.strokeRect(margin, margin, (n - 1) * cellSize, (n - 1) * cellSize);
+
+    if (n === 15) {
+      const pts = [3, 7, 11];
+      ctx.fillStyle = 'rgba(58, 34, 10, 0.85)';
+      const rr = Math.max(2, S * 0.0075);
+      for (const py of pts) {
+        for (const px of pts) {
+          ctx.beginPath();
+          ctx.arc(margin + px * cellSize, margin + py * cellSize, rr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    const r = cellSize * 0.44;
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        if (state.board[y][x] === 0) continue;
+        drawStone(margin + x * cellSize, margin + y * cellSize, state.board[y][x], r);
+      }
+    }
+
+    if (state.moves.length > 0 && !state.winLine) {
+      const last = state.moves[state.moves.length - 1];
+      const lx = margin + last.x * cellSize;
+      const ly = margin + last.y * cellSize;
+      ctx.beginPath();
+      ctx.arc(lx, ly, r * 0.30, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff5252';
+      ctx.fill();
+      ctx.lineWidth = Math.max(1, r * 0.1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.stroke();
+    }
+
+    if (state.winLine && state.winLine.length > 1) {
+      const a = state.winLine[0];
+      const b = state.winLine[state.winLine.length - 1];
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = '#ffd54f';
+      ctx.lineWidth = Math.max(4, cellSize * 0.16);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(margin + a[0] * cellSize, margin + a[1] * cellSize);
+      ctx.lineTo(margin + b[0] * cellSize, margin + b[1] * cellSize);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawStone(cx, cy, player, r) {
+    ctx.beginPath();
+    ctx.arc(cx + r * 0.10, cy + r * 0.14, r * 0.98, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(45, 25, 6, 0.32)';
+    ctx.fill();
+
+    const grad = ctx.createRadialGradient(
+      cx - r * 0.34, cy - r * 0.38, r * 0.06,
+      cx, cy, r * 1.06
+    );
+    if (player === 1) {
+      grad.addColorStop(0,    '#7d7d7d');
+      grad.addColorStop(0.34, '#3b3b3b');
+      grad.addColorStop(1,    '#050505');
+    } else {
+      grad.addColorStop(0,    '#ffffff');
+      grad.addColorStop(0.44, '#f4f4f4');
+      grad.addColorStop(1,    '#bcbcbc');
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.lineWidth = Math.max(0.6, r * 0.07);
+    ctx.strokeStyle = player === 1 ? 'rgba(0,0,0,0.55)' : 'rgba(150,150,150,0.65)';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx - r * 0.32, cy - r * 0.34, r * 0.17, 0, Math.PI * 2);
+    ctx.fillStyle = player === 1 ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.85)';
+    ctx.fill();
+  }
+
+  /* ========================================================
+     规则判定
+     ======================================================== */
+  function getWinLine(board, x, y, player, size) {
+    for (const [dx, dy] of DIRS) {
+      const cells = [[x, y]];
+      for (let s = 1; s <= 4; s++) {
+        const nx = x + dx * s, ny = y + dy * s;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size || board[ny][nx] !== player) break;
+        cells.push([nx, ny]);
+      }
+      for (let s = 1; s <= 4; s++) {
+        const nx = x - dx * s, ny = y - dy * s;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size || board[ny][nx] !== player) break;
+        cells.unshift([nx, ny]);
+      }
+      if (cells.length >= 5) return cells;
+    }
+    return null;
+  }
+
+  function checkForbidden(board, x, y, size) {
+    let fours = 0;
+    let openThrees = 0;
+
+    for (const [dx, dy] of DIRS) {
+      let s = '';
+      for (let i = -5; i <= 5; i++) {
+        const nx = x + dx * i;
+        const ny = y + dy * i;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size) s += '2';
+        else if (i === 0) s += '1';
+        else if (board[ny][nx] === 1) s += '1';
+        else if (board[ny][nx] === 0) s += '0';
+        else s += '2';
+      }
+
+      if (/111111/.test(s)) {
+        return { forbidden: true, reason: '长连禁手' };
+      }
+      if (/11111/.test(s)) continue;
+
+      let f = 0;
+      for (let i = 0; i < s.length; i++) {
+        if (s[i] !== '0') continue;
+        const t = s.slice(0, i) + '1' + s.slice(i + 1);
+        if (/11111/.test(t)) f++;
+      }
+      fours += f;
+
+      if (f === 0) {
+        let three = 0;
+        for (let i = 0; i < s.length; i++) {
+          if (s[i] !== '0') continue;
+          const t = s.slice(0, i) + '1' + s.slice(i + 1);
+          if (/011110/.test(t)) three++;
+        }
+        if (three > 0) openThrees++;
+      }
+    }
+
+    if (fours >= 2)      return { forbidden: true, reason: '双四禁手' };
+    if (openThrees >= 2) return { forbidden: true, reason: '双三禁手' };
+    return { forbidden: false, reason: '' };
+  }
+
+  /* ========================================================
+     落子流程
+     ======================================================== */
+  function tryMove(x, y) {
+    if (state.gameOver) return false;
+    if (x < 0 || y < 0 || x >= state.size || y >= state.size) return false;
+    if (state.board[y][x] !== 0) return false;
+
+    const player = state.current;
+
+    if (state.forbidden && player === 1) {
+      state.board[y][x] = 1;
+      const res = checkForbidden(state.board, x, y, state.size);
+      state.board[y][x] = 0;
+      if (res.forbidden) {
+        showToast('禁手：' + res.reason + '，请另选落点');
+        return false;
+      }
+    }
+
+    doMove(x, y, player);
+    return true;
+  }
+
+  function doMove(x, y, player) {
+    state.board[y][x] = player;
+    state.moves.push({ x, y, player });
+
+    if (state.moves.length === 1) startTimer();
+
+    const win = getWinLine(state.board, x, y, player, state.size);
+    if (win) {
+      state.winLine = win;
+      endGame(player);
+      return;
+    }
+
+    if (state.moves.length >= MAX_MOVES) {
+      endGame(0);
+      return;
+    }
+    if (state.moves.length >= state.size * state.size) {
+      endGame(0);
+      return;
+    }
+
+    state.current = 3 - player;
+    draw();
+    updateUI();
+
+    if (state.mode === 'pve' && state.current !== state.humanColor && !state.gameOver) {
+      scheduleAI();
+    }
+  }
+
+  function endGame(winner) {
+    state.gameOver = true;
+    state.winner = winner;
+    stopTimer();
+
+    let gainedText = '';
+
+    if (isHellPve()) {
+      if (winner === 0) {
+        gainedText = '地狱难度平局 · 双方均不加分';
+      } else if (winner === state.humanColor) {
+        state.roundPoints[winner] += HELL_WIN_POINTS;
+        state.scores[winner]      += HELL_WIN_POINTS;
+        gainedText = (winner === 1 ? '黑棋' : '白棋') + ' +' + HELL_WIN_POINTS + ' 分（地狱难度奖励）';
+      } else {
+        const cur = state.scores[state.humanColor];
+        const deduct = Math.min(HELL_LOSE_PENALTY, Math.max(0, cur));
+        if (deduct > 0) {
+          state.scores[state.humanColor] -= deduct;
+          gainedText = (state.humanColor === 1 ? '黑棋' : '白棋') + ' -' + deduct + ' 分（地狱难度惩罚）';
+        } else {
+          gainedText = '地狱难度失败 · 当前积分为 0，不扣分';
+        }
+      }
+    } else {
+      if (winner === 1 || winner === 2) {
+        state.roundPoints[winner] += WIN_POINTS;
+        state.scores[winner]      += WIN_POINTS;
+        gainedText = (winner === 1 ? '黑棋' : '白棋') + ' +' + WIN_POINTS + ' 分';
+      } else {
+        state.roundPoints[1] += DRAW_POINTS;
+        state.roundPoints[2] += DRAW_POINTS;
+        state.scores[1]      += DRAW_POINTS;
+        state.scores[2]      += DRAW_POINTS;
+        gainedText = '双方各 +' + DRAW_POINTS + ' 分';
+      }
+    }
+
+    saveScores();
+    draw();
+    updateUI();
+
+    if (winner === 0) {
+      showToast('平局 · ' + state.moves.length + ' 手 · ' + gainedText);
+    } else {
+      showToast((winner === 1 ? '黑棋' : '白棋') + '获胜 · ' + gainedText);
+    }
+  }
+
+  function undo() {
+    if (state.aiThinking) return;
+    if (state.moves.length === 0) { showToast('当前没有可悔的棋'); return; }
+    if (state.gameOver) { showToast('对局已结束，请点击「重新开始」'); return; }
+
+    const undoSide = (state.mode === 'pve') ? state.humanColor : state.current;
+    const hellFreeUndo = isHellPve();
+
+    let penalized = 0;
+    if (!hellFreeUndo && state.roundPoints[undoSide] > 0) {
+      penalized = Math.min(UNDO_COST, state.roundPoints[undoSide]);
+      state.roundPoints[undoSide] -= penalized;
+      state.scores[undoSide]      -= penalized;
+      saveScores();
+    }
+
+    const pop = () => {
+      const m = state.moves.pop();
+      state.board[m.y][m.x] = 0;
+      state.current = m.player;
+    };
+
+    pop();
+    if (state.mode === 'pve' && state.moves.length > 0 && state.current !== state.humanColor) {
+      pop();
+    }
+
+    state.winLine = null;
+    state.winner = 0;
+
+    if (state.moves.length === 0) resetTimer();
+
+    draw();
+    updateUI();
+
+    if (hellFreeUndo) {
+      showToast('已悔棋 · 地狱难度不扣分');
+    } else if (penalized > 0) {
+      showToast('已悔棋 · 本局积分 -' + penalized);
+    } else {
+      showToast('已悔棋 · 本局积分为 0，不扣分');
+    }
+  }
+
+  function newRound(silent) {
+    state.roundId++;
+
+    resetTimer();
+
+    state.board = Array.from({ length: state.size }, () => new Array(state.size).fill(0));
+    state.moves = [];
+    state.gameOver = false;
+    state.winner = 0;
+    state.winLine = null;
+    state.aiThinking = false;
+    state.roundPoints = { 1: 0, 2: 0 };
+
+    if (state.mode === 'pve') {
+      state.humanColor = state.firstPlayer === 'human' ? 1 : 2;
+    } else {
+      state.humanColor = 0;
+    }
+    state.current = 1;
+
+    resizeCanvas();
+    updateUI();
+
+    if (!silent) {
+      if (state.mode === 'pve') {
+        const hellTip = state.difficulty === 'hell' ? ' · 地狱难度' : '';
+        showToast((state.humanColor === 1 ? '新对局开始，你执黑先行' : '新对局开始，电脑执黑先行') + hellTip);
+      } else {
+        showToast('新对局开始，黑棋先行');
+      }
+    }
+
+    if (state.mode === 'pve' && state.current !== state.humanColor) {
+      scheduleAI();
+    }
+  }
+
+  /* ========================================================
+     计时器
+     ======================================================== */
+  function startTimer() {
+    if (state.timer.running) return;
+    state.timer.running = true;
+    state.timer.startTs = Date.now() - state.timer.elapsed;
+    state.timer.id = setInterval(() => {
+      state.timer.elapsed = Date.now() - state.timer.startTs;
+      renderTimer();
+    }, 250);
+  }
+
+  function stopTimer() {
+    if (state.timer.id) {
+      clearInterval(state.timer.id);
+      state.timer.id = null;
+    }
+    if (state.timer.running) {
+      state.timer.elapsed = Date.now() - state.timer.startTs;
+      state.timer.running = false;
+    }
+    renderTimer();
+  }
+
+  function resetTimer() {
+    if (state.timer.id) {
+      clearInterval(state.timer.id);
+      state.timer.id = null;
+    }
+    state.timer.elapsed = 0;
+    state.timer.startTs = 0;
+    state.timer.running = false;
+    renderTimer();
+  }
+
+  function renderTimer() {
+    const total = Math.floor(state.timer.elapsed / 1000);
+    const m = String(Math.floor(total / 60)).padStart(2, '0');
+    const s = String(total % 60).padStart(2, '0');
+    document.getElementById('timerText').textContent = m + ':' + s;
+  }
+
+  /* ========================================================
+     AI 基础评估
+     ======================================================== */
+  function pointScore(board, x, y, player, size) {
+    const opp = 3 - player;
+    let score = 0;
+
+    for (const [dx, dy] of DIRS) {
+      for (let off = -4; off <= 0; off++) {
+        let cntMe = 0;
+        let blocked = false;
+        for (let k = 0; k < 5; k++) {
+          const gx = x + dx * (off + k);
+          const gy = y + dy * (off + k);
+          if (gx < 0 || gy < 0 || gx >= size || gy >= size) { blocked = true; break; }
+          const v = (off + k === 0) ? player : board[gy][gx];
+          if (v === opp) { blocked = true; break; }
+          if (v === player) cntMe++;
+        }
+        if (!blocked) score += WINDOW_SCORE[cntMe];
+      }
+    }
+    return score;
+  }
+
+  function getCandidates(board, size, radius) {
+    radius = radius || 2;
+
+    let hasStone = false;
+    for (let y = 0; y < size && !hasStone; y++) {
+      for (let x = 0; x < size; x++) {
+        if (board[y][x] !== 0) { hasStone = true; break; }
+      }
+    }
+    if (!hasStone) {
+      const c = Math.floor(size / 2);
+      return [{ x: c, y: c }];
+    }
+
+    const seen = new Set();
+    const out = [];
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (board[y][x] === 0) continue;
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = x + dx, ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+            if (board[ny][nx] !== 0) continue;
+            const key = ny * size + nx;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push({ x: nx, y: ny });
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  /** 统计在 (x,y) 落下 player 后，player 能立即成五的落点数量 */
+  function countPlayerWinPoints(board, player, size, limit) {
+    const cands = getCandidates(board, size);
+    let count = 0;
+    for (const c of cands) {
+      board[c.y][c.x] = player;
+      const win = getWinLine(board, c.x, c.y, player, size);
+      board[c.y][c.x] = 0;
+      if (win) {
+        count++;
+        if (count >= (limit || 2)) return count;
+      }
+    }
+    return count;
+  }
+
+  /* ========================================================
+     地狱前瞻
+     ======================================================== */
+  function hellLookahead(ai, human, size, board) {
+    const hCands = getCandidates(board, size);
+    if (hCands.length === 0) return 0;
+
+    const hScored = hCands.map(hc => {
+      const atk = pointScore(board, hc.x, hc.y, human, size);
+      const def = pointScore(board, hc.x, hc.y, ai, size);
+      return { x: hc.x, y: hc.y, atk, def, total: atk + def * 0.95 };
+    });
+    hScored.sort((a, b) => b.total - a.total);
+    const hTop = hScored.slice(0, 10);
+
+    let worst = Infinity;
+
+    for (const hc of hTop) {
+      // 人类直接连五 → 这步 AI 棋极差
+      board[hc.y][hc.x] = human;
+      if (getWinLine(board, hc.x, hc.y, human, size)) {
+        board[hc.y][hc.x] = 0;
+        return -FIVE_SCORE * 10;
+      }
+
+      // 人类落子后形成双重威胁（活四）→ 几乎必败
+      if (countPlayerWinPoints(board, human, size, 2) >= 2) {
+        board[hc.y][hc.x] = 0;
+        return -FIVE_SCORE * 5;
+      }
+
+      let aiBest = -Infinity;
+      const aCands = getCandidates(board, size);
+      const aScored = aCands.map(ac => {
+        const atk = pointScore(board, ac.x, ac.y, ai, size);
+        const def = pointScore(board, ac.x, ac.y, human, size);
+        return { x: ac.x, y: ac.y, atk, def, total: atk + def * 0.95 };
+      });
+      aScored.sort((a, b) => b.total - a.total);
+      let aTop = aScored.slice(0, 10);
+
+      if (state.forbidden && ai === 1) {
+        aTop = aTop.filter(ac => {
+          board[ac.y][ac.x] = 1;
+          const r = checkForbidden(board, ac.x, ac.y, size);
+          board[ac.y][ac.x] = 0;
+          return !r.forbidden;
+        });
+      }
+
+      for (const ac of aTop) {
+        board[ac.y][ac.x] = ai;
+        let v;
+        if (getWinLine(board, ac.x, ac.y, ai, size)) {
+          v = FIVE_SCORE * 2;
+        } else {
+          v = pointScore(board, ac.x, ac.y, ai, size)
+            - pointScore(board, ac.x, ac.y, human, size) * 1.08;
+        }
+        board[ac.y][ac.x] = 0;
+        if (v > aiBest) aiBest = v;
+      }
+
+      board[hc.y][hc.x] = 0;
+
+      const val = (aiBest === -Infinity) ? -FIVE_SCORE * 5 : aiBest;
+      if (val < worst) worst = val;
+    }
+
+    return worst === Infinity ? 0 : worst;
+  }
+
+  /* ========================================================
+     AI 选点
+     ======================================================== */
+  function findBestMove() {
+    const size = state.size;
+    const board = state.board;
+    const ai = state.current;
+    const human = 3 - ai;
+
+    let cands = getCandidates(board, size);
+
+    if (state.forbidden && ai === 1) {
+      cands = cands.filter(c => {
+        board[c.y][c.x] = 1;
+        const r = checkForbidden(board, c.x, c.y, size);
+        board[c.y][c.x] = 0;
+        return !r.forbidden;
+      });
+    }
+
+    if (cands.length === 0) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (board[y][x] === 0) return { x, y };
+        }
+      }
+      return null;
+    }
+
+    const scored = cands.map(c => {
+      const atk = pointScore(board, c.x, c.y, ai, size);
+      const def = pointScore(board, c.x, c.y, human, size);
+      return { x: c.x, y: c.y, atk, def, total: 0 };
+    });
+
+    /* ============ 关键修复：用 getWinLine 精确检测 ============ */
+
+    // 1. AI 若能立即成五 → 直接赢
+    for (const c of scored) {
+      board[c.y][c.x] = ai;
+      const win = getWinLine(board, c.x, c.y, ai, size);
+      board[c.y][c.x] = 0;
+      if (win) return c;
+    }
+
+    // 2. 人类下一手能成五 → 必须堵（若为活四则无法阻止，但优先堵 atk 最大的点）
+    const humanWinPoints = [];
+    for (const c of scored) {
+      board[c.y][c.x] = human;
+      const win = getWinLine(board, c.x, c.y, human, size);
+      board[c.y][c.x] = 0;
+      if (win) humanWinPoints.push(c);
+    }
+    if (humanWinPoints.length > 0) {
+      humanWinPoints.sort((a, b) => b.atk - a.atk);
+      return humanWinPoints[0];
+    }
+
+    const diff = state.difficulty;
+
+    /* ---------- 简单 ---------- */
+    if (diff === 'easy') {
+      if (Math.random() < 0.32) {
+        return cands[Math.floor(Math.random() * cands.length)];
+      }
+      scored.forEach(s => {
+        s.total = s.atk * 0.8 + s.def * 0.45 + Math.random() * 120;
+      });
+      scored.sort((a, b) => b.total - a.total);
+      const top = scored.slice(0, Math.min(3, scored.length));
+      return top[Math.floor(Math.random() * top.length)];
+    }
+
+    /* ---------- 普通 ---------- */
+    if (diff === 'normal') {
+      scored.forEach(s => {
+        s.total = s.atk + s.def * 0.85 + Math.random() * 6;
+      });
+      scored.sort((a, b) => b.total - a.total);
+      return scored[0];
+    }
+
+    /* ---------- 困难 ---------- */
+    if (diff === 'hard') {
+      scored.forEach(s => { s.total = s.atk + s.def; });
+      scored.sort((a, b) => b.total - a.total);
+      const top = scored.slice(0, Math.min(8, scored.length));
+
+      let best = top[0];
+      let bestVal = -Infinity;
+
+      for (const c of top) {
+        board[c.y][c.x] = ai;
+
+        if (getWinLine(board, c.x, c.y, ai, size)) {
+          board[c.y][c.x] = 0;
+          return c;
+        }
+
+        let oppBest = 0;
+        const hCands = getCandidates(board, size);
+        for (const hc of hCands) {
+          const s = pointScore(board, hc.x, hc.y, human, size);
+          if (s > oppBest) oppBest = s;
+        }
+
+        board[c.y][c.x] = 0;
+
+        const val = c.atk + c.def * 0.6 - oppBest * 0.85;
+        if (val > bestVal) {
+          bestVal = val;
+          best = c;
+        }
+      }
+      return best;
+    }
+
+    /* ---------- 地狱 ---------- */
+    // 额外检查：人类是否即将形成双重威胁（活四）？若是，必须提前阻止
+    const urgentDefense = [];
+    for (const c of scored) {
+      board[c.y][c.x] = human;
+      if (countPlayerWinPoints(board, human, size, 2) >= 2) {
+        urgentDefense.push(c);
+      }
+      board[c.y][c.x] = 0;
+    }
+    if (urgentDefense.length > 0) {
+      urgentDefense.sort((a, b) => b.atk - a.atk);
+      return urgentDefense[0];
+    }
+
+    scored.forEach(s => { s.total = s.atk + s.def * 1.08; });
+    scored.sort((a, b) => b.total - a.total);
+    const aiTop = scored.slice(0, Math.min(16, scored.length));
+
+    let best = aiTop[0];
+    let bestVal = -Infinity;
+
+    for (const c of aiTop) {
+      board[c.y][c.x] = ai;
+
+      if (getWinLine(board, c.x, c.y, ai, size)) {
+        board[c.y][c.x] = 0;
+        return c;
+      }
+
+      const val = hellLookahead(ai, human, size, board);
+      board[c.y][c.x] = 0;
+
+      if (val > bestVal) {
+        bestVal = val;
+        best = c;
+      }
+    }
+    return best;
+  }
+
+  function scheduleAI() {
+    if (state.aiThinking) return;
+    state.aiThinking = true;
+    const round = state.roundId;
+    updateUI();
+
+    const wait = state.difficulty === 'hell' ? 420 : 340;
+
+    setTimeout(() => {
+      if (round !== state.roundId) return;
+      state.aiThinking = false;
+      if (state.gameOver) { updateUI(); return; }
+
+      const mv = findBestMove();
+      if (mv) tryMove(mv.x, mv.y);
+      updateUI();
+    }, wait);
+  }
+
+  /* ========================================================
+     UI
+     ======================================================== */
+  function updateDifficultyBadge() {
+    const badge = document.getElementById('difficultyBadge');
+    if (!badge) return;
+
+    let text = '普通';
+    let cls = 'difficulty-badge';
+
+    if (state.mode === 'pvp') {
+      text = '人人';
+      cls += ' pvp';
+    } else {
+      const key = state.difficulty || 'normal';
+      text = DIFFICULTY_LABELS[key] || '普通';
+      cls += ' ' + key;
+    }
+
+    badge.textContent = text;
+    badge.className = cls;
+    badge.setAttribute('aria-label', '当前对局难度：' + text);
+  }
+
+  function updateUI() {
+    const dot = document.getElementById('turnDot');
+    const txt = document.getElementById('turnText');
+
+    if (state.gameOver) {
+      if (state.winner === 0) {
+        dot.className = 'dot draw';
+        txt.textContent = '平局 · 共 ' + state.moves.length + ' 手';
+      } else {
+        dot.className = 'dot ' + (state.winner === 1 ? 'black' : 'white');
+        txt.textContent = (state.winner === 1 ? '黑棋' : '白棋') + '获胜！';
+      }
+    } else {
+      dot.className = 'dot ' + (state.current === 1 ? 'black' : 'white');
+      let label = (state.current === 1 ? '黑棋' : '白棋') + '回合';
+      if (state.mode === 'pve') {
+        if (state.aiThinking) label = '电脑思考中…';
+        else label += (state.current === state.humanColor ? '（你）' : '（电脑）');
+      }
+      txt.textContent = label;
+    }
+
+    updateDifficultyBadge();
+
+    document.getElementById('scoreBlack').textContent = state.scores[1];
+    document.getElementById('scoreWhite').textContent = state.scores[2];
+
+    const rb = document.getElementById('roundBlack');
+    const rw = document.getElementById('roundWhite');
+    if (rb) {
+      rb.textContent = '本局 ' + (state.roundPoints[1] > 0 ? '+' + state.roundPoints[1] : '0');
+      rb.classList.toggle('earned', state.roundPoints[1] > 0);
+    }
+    if (rw) {
+      rw.textContent = '本局 ' + (state.roundPoints[2] > 0 ? '+' + state.roundPoints[2] : '0');
+      rw.classList.toggle('earned', state.roundPoints[2] > 0);
+    }
+
+    document.getElementById('btnUndo').disabled =
+      state.moves.length === 0 || state.gameOver || state.aiThinking;
+
+    renderTimer();
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2100);
+  }
+
+  /* ========================================================
+     积分持久化
+     ======================================================== */
+  function loadScores() {
+    try {
+      const raw = localStorage.getItem(SCORE_KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj.black === 'number' && typeof obj.white === 'number') {
+        state.scores = { 1: obj.black, 2: obj.white };
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveScores() {
+    try {
+      localStorage.setItem(SCORE_KEY, JSON.stringify({
+        black: state.scores[1],
+        white: state.scores[2]
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ========================================================
+     弹窗
+     ======================================================== */
+  function syncBodyLock() {
+    const anyOpen =
+      document.getElementById('settingsOverlay').classList.contains('is-open') ||
+      document.getElementById('hellOverlay').classList.contains('is-open');
+    document.body.classList.toggle('modal-open', anyOpen);
+  }
+
+  let lastFocusedEl = null;
+
+  function setPanelOpen(open, opts) {
+    opts = opts || {};
+    const overlay = document.getElementById('settingsOverlay');
+    const btn = document.getElementById('btnSettingsToggle');
+    const closeBtn = document.getElementById('btnCloseSettings');
+    if (!overlay || !btn) return;
+
+    const isOpen = overlay.classList.contains('is-open');
+    if (isOpen === open) {
+      if (opts.persist) {
+        try { localStorage.setItem(SETTINGS_KEY, open ? '1' : '0'); } catch (e) { /* ignore */ }
+      }
+      return;
+    }
+
+    overlay.classList.toggle('is-open', open);
+    overlay.setAttribute('aria-hidden', String(!open));
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', String(open));
+    syncBodyLock();
+
+    if (opts.persist) {
+      try { localStorage.setItem(SETTINGS_KEY, open ? '1' : '0'); } catch (e) { /* ignore */ }
+    }
+
+    if (open) {
+      lastFocusedEl = document.activeElement;
+      if (!opts.silent) {
+        setTimeout(() => {
+          if (closeBtn) closeBtn.focus({ preventScroll: true });
+        }, 80);
+      }
+    } else if (opts.restoreFocus && lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+      lastFocusedEl.focus({ preventScroll: true });
+      lastFocusedEl = null;
+    }
+  }
+
+  let hellPending = null;
+
+  function openHellModal(pending) {
+    const overlay = document.getElementById('hellOverlay');
+    if (!overlay) return;
+
+    hellPending = pending;
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    syncBodyLock();
+
+    setTimeout(() => {
+      const btn = document.getElementById('btnHellContinue');
+      if (btn) btn.focus({ preventScroll: true });
+    }, 90);
+  }
+
+  function closeHellModal(restoreFocus) {
+    const overlay = document.getElementById('hellOverlay');
+    if (!overlay || !overlay.classList.contains('is-open')) return;
+
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    hellPending = null;
+    syncBodyLock();
+
+    if (restoreFocus) {
+      const btn = document.getElementById('btnSettingsToggle');
+      if (btn) btn.focus({ preventScroll: true });
+    }
+  }
+
+  function applySegment(group, btn, g, v) {
+    group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (g === 'size') {
+      state.size = parseInt(v, 10);
+      newRound(true);
+      showToast('棋盘已切换为 ' + state.size + '×' + state.size + '，新对局开始');
+    } else if (g === 'mode') {
+      state.mode = v;
+      updateSettingVisibility();
+      newRound(true);
+      showToast(v === 'pve' ? '已切换为人机对战' : '已切换为人人对战');
+    } else if (g === 'difficulty') {
+      state.difficulty = v;
+      if (v === 'hell') {
+        showToast('地狱难度已启用 · 胜 +50 / 负 -5 / 平 0');
+      } else {
+        showToast('电脑难度：' + btn.textContent.trim());
+      }
+      newRound(true);
+    } else if (g === 'first') {
+      state.firstPlayer = v;
+      newRound(true);
+    }
+  }
+
+  /* ========================================================
+     交互
+     ======================================================== */
+  function bindEvents() {
+    canvas.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      if (state.gameOver || state.aiThinking) return;
+      if (state.mode === 'pve' && state.current !== state.humanColor) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width * boardPx;
+      const py = (e.clientY - rect.top) / rect.height * boardPx;
+
+      const gx = Math.round((px - margin) / cellSize);
+      const gy = Math.round((py - margin) / cellSize);
+
+      if (gx < 0 || gy < 0 || gx >= state.size || gy >= state.size) return;
+
+      const cx = margin + gx * cellSize;
+      const cy = margin + gy * cellSize;
+      if (Math.hypot(px - cx, py - cy) > cellSize * 0.72) return;
+
+      tryMove(gx, gy);
+    }, { passive: false });
+
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    document.querySelectorAll('.segmented').forEach(group => {
+      group.addEventListener('click', function (e) {
+        const btn = e.target.closest('button');
+        if (!btn || btn.classList.contains('active')) return;
+
+        const g = group.dataset.group;
+        const v = btn.dataset.value;
+
+        if (g === 'difficulty' && v === 'hell') {
+          openHellModal({ group, btn });
+          return;
+        }
+
+        applySegment(group, btn, g, v);
+      });
+    });
+
+    document.getElementById('chkForbidden').addEventListener('change', function () {
+      state.forbidden = this.checked;
+      showToast(this.checked ? '禁手规则已开启' : '禁手规则已关闭');
+      newRound(true);
+    });
+
+    document.getElementById('btnRestart').addEventListener('click', () => newRound());
+    document.getElementById('btnUndo').addEventListener('click', undo);
+
+    document.getElementById('btnResetScore').addEventListener('click', () => {
+      state.scores = { 1: 0, 2: 0 };
+      state.roundPoints = { 1: 0, 2: 0 };
+      saveScores();
+      updateUI();
+      showToast('历史积分与本局积分已清零');
+    });
+
+    let rt = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(resizeCanvas, 140);
+    });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resizeCanvas, 260);
+    });
+  }
+
+  function initModals() {
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const settingsBtn = document.getElementById('btnSettingsToggle');
+    const settingsCloseBtn = document.getElementById('btnCloseSettings');
+    const hellOverlay = document.getElementById('hellOverlay');
+
+    if (!settingsOverlay || !settingsBtn || !hellOverlay) return;
+
+    let saved = null;
+    try { saved = localStorage.getItem(SETTINGS_KEY); } catch (e) { /* ignore */ }
+    const shouldOpen = (saved === null) ? true : (saved === '1');
+    if (shouldOpen) {
+      setPanelOpen(true, { persist: false, silent: true });
+    }
+
+    settingsBtn.addEventListener('click', function () {
+      const isOpen = settingsOverlay.classList.contains('is-open');
+      setPanelOpen(!isOpen, { persist: true, restoreFocus: true });
+    });
+
+    if (settingsCloseBtn) {
+      settingsCloseBtn.addEventListener('click', function () {
+        setPanelOpen(false, { persist: true, restoreFocus: true });
+      });
+    }
+
+    settingsOverlay.addEventListener('click', function (e) {
+      if (e.target === settingsOverlay) {
+        setPanelOpen(false, { persist: true, restoreFocus: true });
+      }
+    });
+
+    const settingsModalEl = settingsOverlay.querySelector('.modal');
+    if (settingsModalEl) {
+      settingsModalEl.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
+
+    const btnHellBack = document.getElementById('btnHellBack');
+    const btnHellContinue = document.getElementById('btnHellContinue');
+    const btnCloseHell = document.getElementById('btnCloseHell');
+
+    if (btnHellContinue) {
+      btnHellContinue.addEventListener('click', function () {
+        const pending = hellPending;
+        closeHellModal(false);
+        if (pending) {
+          applySegment(pending.group, pending.btn, 'difficulty', 'hell');
+        }
+      });
+    }
+
+    if (btnHellBack) {
+      btnHellBack.addEventListener('click', function () {
+        closeHellModal(true);
+        showToast('已取消地狱难度，可重新选择难度');
+      });
+    }
+
+    if (btnCloseHell) {
+      btnCloseHell.addEventListener('click', function () {
+        closeHellModal(true);
+        showToast('已取消地狱难度，可重新选择难度');
+      });
+    }
+
+    hellOverlay.addEventListener('click', function (e) {
+      if (e.target === hellOverlay) {
+        closeHellModal(true);
+        showToast('已取消地狱难度，可重新选择难度');
+      }
+    });
+
+    const hellModalEl = hellOverlay.querySelector('.modal');
+    if (hellModalEl) {
+      hellModalEl.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' && e.keyCode !== 27) return;
+
+      if (hellOverlay.classList.contains('is-open')) {
+        e.preventDefault();
+        closeHellModal(true);
+        showToast('已取消地狱难度，可重新选择难度');
+        return;
+      }
+
+      if (settingsOverlay.classList.contains('is-open')) {
+        e.preventDefault();
+        setPanelOpen(false, { persist: true, restoreFocus: true });
+      }
+    });
+  }
+
+  function updateSettingVisibility() {
+    const isPve = state.mode === 'pve';
+    document.getElementById('rowDifficulty').style.display = isPve ? '' : 'none';
+    document.getElementById('rowFirst').style.display = isPve ? '' : 'none';
+  }
+
+  function init() {
+    loadScores();
+    state.board = Array.from({ length: state.size }, () => new Array(state.size).fill(0));
+    state.humanColor = 0;
+    state.current = 1;
+    state.roundPoints = { 1: 0, 2: 0 };
+
+    bindEvents();
+    initModals();
+    updateSettingVisibility();
+    resizeCanvas();
+    updateUI();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>

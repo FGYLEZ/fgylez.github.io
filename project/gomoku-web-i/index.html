@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>古云群晖五子棋Web版 I</title>
+<script>
+/* 在页面渲染前恢复“对局设置”弹窗状态，避免刷新时闪一下弹窗 */
+(function(){
+  try{
+    if(localStorage.getItem('guyun_settings_menu_open_v1') === '0'){
+      document.documentElement.classList.add('settings-modal-closed');
+    }
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --brand:#0f6cbd;
+    --brand-hover:#115ea3;
+    --brand-soft:#e8f2fc;
+    --text:#242424;
+    --text-2:#605e5c;
+    --text-3:#8a8886;
+    --surface:#ffffff;
+    --surface-2:#faf9f8;
+    --bg:#f3f2f1;
+    --line:#e1dfdd;
+    --line-strong:#c8c6c4;
+    --success:#0e7c44;
+    --warn:#b10e1c;
+    --shadow:0 1.6px 3.6px rgba(0,0,0,.13),0 .3px .9px rgba(0,0,0,.10);
+    --radius:8px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei","微软雅黑","PingFang SC",-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
+    color:var(--text);background:var(--bg);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;touch-action:manipulation;}
+  .app{max-width:1240px;margin:0 auto;padding:18px 18px 32px;}
+
+  /* ---------- Header ---------- */
+  .app-header{
+    display:flex;align-items:center;gap:14px;padding:14px 20px;margin-bottom:18px;
+    background:linear-gradient(110deg,#0f6cbd,#0a4f8f);color:#fff;border-radius:var(--radius);
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .app-header::after{
+    content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%);
+  }
+  .logo{
+    width:38px;height:38px;border-radius:50%;flex:0 0 38px;position:relative;
+    background:radial-gradient(circle at 32% 28%,#fff,#c9d9e8 60%,#8aa7bf);
+    box-shadow:0 2px 8px rgba(0,0,0,.28);
+  }
+  .logo::after{
+    content:"";position:absolute;right:-6px;bottom:-4px;width:24px;height:24px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%,#5a5a5a,#111 65%);
+    box-shadow:0 2px 6px rgba(0,0,0,.4);
+  }
+  .app-header h1{font-size:20px;font-weight:600;margin:0;letter-spacing:.5px;}
+  .app-header .sub{font-size:12px;opacity:.82;margin-left:auto;position:relative;z-index:1;}
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;grid-template-columns:252px minmax(0,1fr);gap:16px;
+    grid-template-areas:"settings game" "score score";align-items:start;
+  }
+  .panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:16px;
+  }
+  .panel h2{
+    font-size:14px;font-weight:600;margin:0 0 14px;padding-bottom:10px;
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;
+  }
+  .panel h2::before{content:"";width:3px;height:15px;border-radius:2px;background:var(--brand);}
+  .settings{grid-area:settings;}
+  .game{grid-area:game;}
+  .score{grid-area:score;}
+
+  /* ---------- “对局设置”入口按钮（位于操作按钮下方） ---------- */
+  .panel-toggle{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+    min-height:38px;border:1px solid var(--line-strong);border-radius:5px;
+    background:var(--surface);padding:8px 12px;font-weight:600;color:var(--text);
+    transition:background .15s,border-color .15s;
+  }
+  .panel-toggle:hover{background:var(--surface-2);}
+  .panel-toggle:active{background:#efefef;}
+  .chevron{
+    width:7px;height:7px;margin:0 1px 3px 0;flex:0 0 7px;
+    border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+    transform:rotate(-45deg);transition:transform .18s ease;
+  }
+  .settings.modal-open .chevron{transform:rotate(45deg);}
+
+  /* ---------- “对局设置”弹窗 ---------- */
+  .settings-modal-closed #settingsOverlay{display:none;}
+  .modal-overlay{
+    position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(17,17,17,.48);backdrop-filter:blur(2px);
+  }
+  .modal{
+    width:100%;max-width:440px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
+    display:flex;flex-direction:column;overflow:hidden;
+    background:var(--surface);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.32);
+    animation:modalIn .18s ease-out;
+  }
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(10px) scale(.98);}
+    to{opacity:1;transform:none;}
+  }
+  .modal-header{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:15px 18px;border-bottom:1px solid var(--line);flex:0 0 auto;
+  }
+  .modal-header h2{font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px;}
+  .modal-header h2::before{content:"";width:3px;height:15px;border-radius:2px;background:var(--brand);}
+  .modal-close{
+    width:32px;height:32px;flex:0 0 32px;border:0;border-radius:5px;background:transparent;
+    color:var(--text-2);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  .modal-close:hover{background:var(--bg);color:var(--text);}
+  .modal-body{padding:18px;overflow-y:auto;overscroll-behavior:contain;}
+  .modal-body .field:last-child{margin-bottom:0;}
+  .modal-footer{
+    display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;
+    border-top:1px solid var(--line);flex:0 0 auto;background:var(--surface-2);
+  }
+
+  /* ---------- 地狱难度免责声明弹窗（位于设置弹窗之上） ---------- */
+  .hell-overlay{display:none;z-index:1100;background:rgba(52,6,10,.62);}
+  .hell-overlay.open{display:flex;}
+  .hell-modal{max-width:430px;}
+  .hell-modal .modal-header h2{color:var(--warn);}
+  .hell-modal .modal-header h2::before{background:var(--warn);}
+  .hell-warning{margin:0;font-size:13.5px;line-height:1.8;color:var(--text);}
+  .hell-warning strong{color:var(--warn);}
+  .hell-quotes{
+    margin:14px 0;padding:11px 14px;border-radius:6px;
+    background:#fdf3f4;border:1px solid #f4c7cc;border-left:3px solid var(--warn);
+  }
+  .hell-quotes p{margin:5px 0;font-size:14px;font-weight:700;color:var(--warn);line-height:1.6;}
+  .hell-tip{margin:0;font-size:12px;color:var(--text-3);line-height:1.7;}
+  .hell-tip strong{color:var(--warn);}
+  .hell-modal .modal-footer .btn{min-width:92px;}
+
+  /* ---------- Form controls ---------- */
+  .field{margin-bottom:14px;}
+  .field.hidden{display:none;}
+  .label{display:block;font-size:12px;color:var(--text-2);margin-bottom:6px;font-weight:600;}
+  .segment{display:flex;background:var(--bg);border-radius:6px;padding:3px;gap:2px;}
+  .segment button{
+    flex:1;border:0;background:transparent;border-radius:4px;padding:7px 4px;
+    color:var(--text-2);font-size:12.5px;transition:background .15s,box-shadow .15s,color .15s;
+    white-space:nowrap;
+  }
+  .segment button:hover{background:rgba(0,0,0,.045);}
+  .segment button.active{
+    background:var(--surface);color:var(--brand);font-weight:600;
+    box-shadow:0 1px 3px rgba(0,0,0,.16);
+  }
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .toggle{position:relative;display:inline-block;width:40px;height:20px;flex:0 0 40px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .slider{
+    position:absolute;inset:0;background:#c8c6c4;border-radius:20px;
+    transition:background .18s;
+  }
+  .slider::before{
+    content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s;
+  }
+  .toggle input:checked + .slider{background:var(--brand);}
+  .toggle input:checked + .slider::before{transform:translateX(20px);}
+
+  .actions{display:flex;flex-direction:column;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;
+    border:1px solid var(--line-strong);background:var(--surface);border-radius:5px;
+    padding:8px 12px;font-weight:600;transition:background .15s,border-color .15s;
+  }
+  .btn:hover{background:var(--surface-2);}
+  .btn:active{background:#efefef;}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .btn.primary:hover{background:var(--brand-hover);border-color:var(--brand-hover);}
+  .btn.danger{background:var(--warn);border-color:var(--warn);color:#fff;}
+  .btn.danger:hover{background:#8c0a16;border-color:#8c0a16;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .hint{font-size:11.5px;color:var(--text-3);margin-top:10px;line-height:1.6;}
+
+  /* ---------- Game area ---------- */
+  .players{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .pcard{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;
+    background:var(--surface-2);border:1px solid var(--line);transition:all .2s;
+  }
+  .pcard.active{border-color:var(--brand);background:var(--brand-soft);box-shadow:inset 0 0 0 1px var(--brand);}
+  .stone{width:20px;height:20px;border-radius:50%;flex:0 0 20px;}
+  .stone.b{background:radial-gradient(circle at 32% 28%,#6c6c6c,#111 68%);box-shadow:0 1px 3px rgba(0,0,0,.4);}
+  .stone.w{background:radial-gradient(circle at 32% 28%,#fff,#d4d4d4 70%);box-shadow:0 1px 3px rgba(0,0,0,.25);border:1px solid #ccc;}
+  .pinfo{min-width:0;}
+  .pname{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prole{font-size:11px;color:var(--text-2);}
+  .clock{
+    margin-left:auto;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;
+    letter-spacing:.5px;color:var(--text);
+  }
+  .pcard.active .clock{color:var(--brand);}
+  .ptag{font-size:10.5px;color:var(--text-3);margin-top:1px;white-space:nowrap;}
+  .ptag.penalty{color:var(--warn);font-weight:600;}
+
+  .status{
+    display:flex;align-items:center;gap:9px;min-height:42px;padding:9px 14px;margin-bottom:12px;
+    border-radius:6px;background:var(--brand-soft);border:1px solid #cfe4f8;color:var(--brand);
+    font-weight:600;font-size:13.5px;
+  }
+  .status .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:0 0 8px;}
+  .status.warn{background:#fdf3f4;border-color:#f4c7cc;color:var(--warn);}
+  .status.win{background:#eaf7ef;border-color:#bfe6cd;color:var(--success);}
+  .status.draw{background:#f3f2f1;border-color:var(--line-strong);color:var(--text-2);}
+  .status.thinking{background:#fff8e6;border-color:#f0d9a8;color:#8a5a00;}
+  .status.thinking .dot{animation:thinkPulse 1s ease-in-out infinite;}
+  @keyframes thinkPulse{0%,100%{opacity:.35;transform:scale(.7);}50%{opacity:1;transform:scale(1.25);}}
+
+  .board-wrap{
+    width:100%;max-width:576px;margin:0 auto;padding:12px;border-radius:12px;
+    background:linear-gradient(145deg,#d9ae70,#b9843f);
+    border:2px solid #9c6c33;
+    box-shadow:0 10px 26px rgba(90,55,20,.32),inset 0 0 0 2px rgba(255,255,255,.18);
+  }
+  canvas#board{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:3px;touch-action:manipulation;cursor:crosshair;}
+  .meta{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    margin-top:12px;font-size:12px;color:var(--text-2);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;
+    background:var(--bg);border:1px solid var(--line);font-size:11.5px;
+  }
+  .badge.on{background:var(--brand-soft);border-color:#cfe4f8;color:var(--brand);}
+  /* 难度徽标：随档位醒目提示 */
+  .diff-badge{font-size:12px;font-weight:700;padding:4px 12px;border:1px solid currentColor;letter-spacing:.3px;}
+  .diff-badge.diff-easy{color:var(--success);background:#eaf7ef;}
+  .diff-badge.diff-medium{color:var(--brand);background:var(--brand-soft);border-color:#cfe4f8;}
+  .diff-badge.diff-hard{color:#a15c00;background:#fff4e5;border-color:#f0d9a8;}
+  .diff-badge.diff-hell{color:#fff;background:var(--warn);border-color:var(--warn);animation:hellGlow 1.8s ease-in-out infinite;}
+  .diff-badge.diff-off{opacity:.5;filter:grayscale(.6);animation:none;}
+  @keyframes hellGlow{0%,100%{box-shadow:0 0 0 2px rgba(177,14,28,.14);}50%{box-shadow:0 0 0 7px rgba(177,14,28,.24);}}
+  .prole.ai-hell{color:var(--warn);font-weight:700;}
+  .prole.ai-hard{color:#a15c00;font-weight:600;}
+
+  /* ---------- Scoreboard：横向大卡片 ---------- */
+  .score-cards{display:flex;flex-wrap:wrap;gap:12px;}
+  .score-card{
+    flex:1 1 130px;min-width:130px;padding:14px 12px;text-align:center;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  }
+  .score-card.primary{background:var(--brand-soft);border-color:#cfe4f8;}
+  .score-card-label{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:12px;color:var(--text-2);font-weight:600;
+  }
+  .score-card-value{
+    margin:5px 0 3px;font-size:36px;line-height:1.1;font-weight:800;
+    color:var(--brand);font-variant-numeric:tabular-nums;letter-spacing:-1px;
+  }
+  .score-card.primary .score-card-value{color:#0a4f8f;}
+  .score-card-sub{font-size:11.5px;color:var(--text-3);white-space:nowrap;}
+  .stone.tiny{width:12px;height:12px;flex:0 0 12px;}
+  .divider{height:1px;background:var(--line);margin:16px 0 14px;}
+  .score-caption{font-size:12px;color:var(--text-2);margin:0 0 10px;font-weight:600;}
+
+  /* ---------- 弹窗内积分规则说明 ---------- */
+  .rules-box{
+    margin-top:18px;padding:12px 14px;border-radius:6px;
+    background:var(--brand-soft);border:1px solid #cfe4f8;
+  }
+  .rules-title{font-size:12.5px;font-weight:700;color:var(--brand);margin-bottom:6px;}
+  .rules-box ul{margin:0;padding-left:18px;font-size:12px;color:var(--text-2);line-height:1.9;}
+  .rules-box b{color:var(--text);}
+
+  .footer{margin-top:18px;text-align:center;font-size:11.5px;color:var(--text-3);line-height:1.8;}
+
+  @media (max-width:980px){
+    .layout{grid-template-columns:minmax(0,1fr) 240px;grid-template-areas:"game settings" "score score";}
+  }
+  @media (max-width:760px){
+    .app{padding:12px 12px 24px;}
+    .app-header{padding:12px 14px;}
+    .app-header h1{font-size:17px;}
+    .app-header .sub{display:none;}
+    .layout{grid-template-columns:1fr;grid-template-areas:"game" "settings" "score";gap:12px;}
+    .panel{padding:14px;}
+    .board-wrap{padding:9px;max-width:100%;}
+    .actions{flex-direction:row;flex-wrap:wrap;}
+    .actions .btn,.actions .panel-toggle{flex:1 1 90px;}
+    .score-card{flex:1 1 40%;min-width:0;padding:12px 8px;}
+    .score-card-value{font-size:30px;}
+    .settings .segment button{padding:9px 4px;font-size:13px;}
+    .clock{font-size:15px;}
+    .modal-overlay{padding:12px;align-items:flex-start;}
+    .modal{max-width:100%;margin-top:6vh;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);}
+    .modal-body{padding:16px;}
+    .modal-body .segment button{padding:9px 4px;font-size:13px;}
+  }
+  @media (max-width:380px){
+    .pcard{padding:8px;gap:7px;}
+    .clock{font-size:13px;}
+    .pname{font-size:12px;}
+    .modal-header,.modal-body,.modal-footer{padding-left:14px;padding-right:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="logo" aria-hidden="true"></div>
+    <h1>古云群晖五子棋Web版 I</h1>
+    <span class="sub">本地单机 · 五子连珠</span>
+  </header>
+
+  <div class="layout">
+    <!-- 设置面板 -->
+    <aside class="panel settings" id="settingsPanel">
+      <div class="actions">
+        <button type="button" class="btn primary" id="btnRestart">重新开始</button>
+        <button type="button" class="btn" id="btnUndo">悔棋</button>
+        <button type="button" class="panel-toggle" id="settingsToggle"
+                aria-haspopup="dialog" aria-expanded="true" aria-controls="settingsOverlay"
+                title="打开对局设置">
+          <span>对局设置</span>
+          <span class="chevron" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="hint">快捷键：Ctrl / ⌘ + Z 悔棋<br/>切换模式或棋盘尺寸将开启新对局。</div>
+    </aside>
+
+    <!-- 棋盘区 -->
+    <main class="game">
+      <div class="players">
+        <div class="pcard active" id="card1">
+          <span class="stone b"></span>
+          <div class="pinfo"><div class="pname" id="name1">黑方</div><div class="prole" id="role1">玩家</div><div class="ptag" id="ptag1"></div></div>
+          <div class="clock" id="clock1">00:00</div>
+        </div>
+        <div class="pcard" id="card2">
+          <span class="stone w"></span>
+          <div class="pinfo"><div class="pname" id="name2">白方</div><div class="prole" id="role2">玩家</div><div class="ptag" id="ptag2"></div></div>
+          <div class="clock" id="clock2">00:00</div>
+        </div>
+      </div>
+
+      <div class="status" id="status"><span class="dot"></span><span id="statusText">黑方先手，请落子</span></div>
+
+      <div class="board-wrap">
+        <canvas id="board" aria-label="五子棋棋盘"></canvas>
+      </div>
+
+      <div class="meta">
+        <span>第 <b id="moveNo">0</b> 手 / 100 手（满 100 手平局）</span>
+        <span class="badge" id="forbidBadge">禁手：关</span>
+        <span class="badge diff-badge diff-medium" id="diffBadge">难度：中等</span>
+      </div>
+    </main>
+
+    <!-- 积分面板 -->
+    <aside class="panel score">
+      <h2>累计积分</h2>
+      <div class="score-cards">
+        <div class="score-card primary">
+          <div class="score-card-label"><span class="stone b tiny"></span>黑方积分</div>
+          <div class="score-card-value" id="scBlackPoints">0</div>
+          <div class="score-card-sub" id="scBlackSub">0 胜</div>
+        </div>
+        <div class="score-card primary">
+          <div class="score-card-label"><span class="stone w tiny"></span>白方积分</div>
+          <div class="score-card-value" id="scWhitePoints">0</div>
+          <div class="score-card-sub" id="scWhiteSub">0 胜</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-label">平局场次</div>
+          <div class="score-card-value" id="scDraw">0</div>
+          <div class="score-card-sub">双方各 +5 分</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-label">总对局</div>
+          <div class="score-card-value" id="scTotal">0</div>
+          <div class="score-card-sub">获胜 +10 分</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p class="score-caption">人机对战 · 玩家视角</p>
+      <div class="score-cards">
+        <div class="score-card">
+          <div class="score-card-label">玩家积分</div>
+          <div class="score-card-value" id="scPvePoints">0</div>
+          <div class="score-card-sub"><span id="scPveW">0</span> 胜 · <span id="scPveL">0</span> 负 · <span id="scPveD">0</span> 平</div>
+        </div>
+        <div class="score-card">
+          <div class="score-card-label">AI 积分</div>
+          <div class="score-card-value" id="scAiPoints">0</div>
+          <div class="score-card-sub">仅统计人机对局</div>
+        </div>
+      </div>
+      <div class="hint">悔棋只扣本局积分，扣完即止；历史积分不受影响。积分自动保存在本机。</div>
+    </aside>
+  </div>
+
+  <div class="footer">
+    规则：同一颜色横向、纵向或斜向连成五子即获胜；开启禁手时黑棋禁止三三、四四与长连（六连及以上）。<br/>
+    总落子数达到 100 手时自动判为平局。
+  </div>
+</div>
+
+<!-- 对局设置弹窗（二级菜单） -->
+<div class="modal-overlay" id="settingsOverlay" role="presentation">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-header">
+      <h2 id="settingsModalTitle">对局设置</h2>
+      <button type="button" class="modal-close" id="settingsClose" aria-label="关闭对局设置" title="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <span class="label">对战模式</span>
+        <div class="segment" id="segMode">
+          <button type="button" data-value="pvp" class="active">人人对战</button>
+          <button type="button" data-value="pve">人机对战</button>
+        </div>
+      </div>
+
+      <div class="field hidden" id="fieldDiff">
+        <span class="label">AI 难度</span>
+        <div class="segment" id="segDiff">
+          <button type="button" data-value="easy">简单</button>
+          <button type="button" data-value="medium" class="active">中等</button>
+          <button type="button" data-value="hard">困难</button>
+          <button type="button" data-value="hell">地狱</button>
+        </div>
+      </div>
+
+      <div class="field hidden" id="fieldColor">
+        <span class="label">玩家执子</span>
+        <div class="segment" id="segColor">
+          <button type="button" data-value="1" class="active">执黑</button>
+          <button type="button" data-value="2">执白</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">先手方（先落子）</span>
+        <div class="segment" id="segFirst">
+          <button type="button" data-value="1" class="active">黑棋先手</button>
+          <button type="button" data-value="2">白棋先手</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">棋盘尺寸</span>
+        <div class="segment" id="segSize">
+          <button type="button" data-value="10">10×10</button>
+          <button type="button" data-value="12">12×12</button>
+          <button type="button" data-value="15" class="active">15×15</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div>
+            <span class="label" style="margin:0">禁手规则</span>
+            <div style="font-size:11px;color:var(--text-3)">仅限制黑棋：三三 / 四四 / 长连</div>
+          </div>
+          <label class="toggle" title="开启后黑棋不可走禁手">
+            <input type="checkbox" id="chkForbidden" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rules-box">
+        <div class="rules-title">积分规则</div>
+        <ul>
+          <li>获胜方 <b>+10 分</b>；平局时双方各 <b>+5 分</b>。</li>
+          <li>每方每次悔棋扣 <b>1 分</b>，仅从<b>本局所得积分</b>中扣除，扣完即止。</li>
+          <li>本局积分为 0 时不再扣分，<b>历史积分不受影响</b>。</li>
+          <li>地狱难度专属：<b>玩家悔棋不扣分</b>，获胜 <b>+50 分</b>，失败<b>倒扣 5 分</b>（积分为 0 时不扣）。</li>
+          <li>地狱难度下 <b>AI 失败不扣分</b>，<b>平局双方均不加分</b>。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn primary" id="settingsDone">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 地狱难度免责声明弹窗 -->
+<div class="modal-overlay hell-overlay" id="hellOverlay" role="presentation" aria-hidden="true">
+  <div class="modal hell-modal" role="dialog" aria-modal="true" aria-labelledby="hellModalTitle">
+    <div class="modal-header">
+      <h2 id="hellModalTitle">地狱难度 · 免责声明</h2>
+      <button type="button" class="modal-close" id="hellClose" aria-label="返回选择" title="返回选择">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="hell-warning">
+        你即将迎战<strong>极强人机</strong>：它几乎不会犯错，会算到你意想不到的地方。
+        选择「继续」即代表你已做好<strong>被虐爆</strong>的心理准备。
+      </p>
+      <div class="hell-quotes">
+        <p>“根本没有这样的人机”</p>
+        <p>“总算知道柯洁当年有多崩溃了”</p>
+      </div>
+      <p class="hell-tip">地狱难度专属积分：<strong>玩家悔棋不扣分，获胜 +50 分，失败倒扣 5 分（积分为 0 不扣）</strong>；AI 失败不扣分，平局双方均不加分。<br/>确认后将开启一局全新的地狱难度对局；返回则取消本次选择，可重新选择难度。</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn" id="hellBack">返回选择</button>
+      <button type="button" class="btn danger" id="hellContinue">继续</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 常量与状态 ================= */
+  var DIRS = [[0,1],[1,0],[1,1],[1,-1]];
+  // AI 难度阈值：候选面、搜索深度、束宽与时间预算逐档提高，压缩容错空间
+  var AI_CONFIG = {
+    easy:   {cands:12, randomTop:6, roots:0,  depth:0, beam:0, deadline:0,    evalTop:8,  defend:0.85},
+    medium: {cands:14, randomTop:0, roots:0,  depth:0, beam:0, deadline:0,    evalTop:10, defend:0.88},
+    hard:   {cands:16, randomTop:0, roots:8,  depth:3, beam:6, deadline:2400, evalTop:12, defend:0.92},
+    hell:   {cands:20, randomTop:0, roots:10, depth:4, beam:7, deadline:3600, evalTop:14, defend:0.96}
+  };
+  var aiCfg = AI_CONFIG.medium;
+  var STORE_KEY = 'guyun_gomoku_scores_v1';
+  var SETTINGS_OPEN_KEY = 'guyun_settings_menu_open_v1';
+
+  var state = {
+    boardSize: 15,
+    mode: 'pvp',
+    difficulty: 'medium',
+    humanColor: 1,
+    firstPlayer: 1,
+    forbidden: false,
+    board: [],
+    history: [],
+    currentPlayer: 1,
+    moveCount: 0,
+    gameOver: false,
+    winner: 0,
+    winLine: null,
+    lastMove: null,
+    clocks: {1:0, 2:0},
+    undoCount: {1:0, 2:0},
+    gamePoints: {1:0, 2:0},
+    settled: false,
+    scoreSnapshot: null
+  };
+  var N = state.boardSize;
+  var geom = {size:0, pad:0, cell:0};
+  var hover = null;
+  var aiTimer = null;
+  // AI 异步计算：搜索在 Worker 中执行，主线程只负责渲染与交互
+  var aiWorker = null, aiWorkerBroken = false, aiWorkerBusy = false;
+  var aiReqId = 0, aiFallbackId = 0;
+  var lastTick = 0;
+
+  var el = {};
+  [   'board','statusText','status','moveNo','forbidBadge','btnUndo','btnRestart',
+   'settingsPanel','settingsToggle','settingsOverlay','settingsClose','settingsDone',
+   'hellOverlay','hellClose','hellBack','hellContinue',
+   'chkForbidden','card1','card2','name1','name2','role1','role2','clock1','clock2','ptag1','ptag2','diffBadge',
+   'scDraw','scTotal','scPveW','scPveL','scPveD',
+   'scBlackPoints','scWhitePoints','scBlackSub','scWhiteSub','scPvePoints','scAiPoints',
+   'fieldDiff','fieldColor'].forEach(function(id){ el[id] = document.getElementById(id); });
+
+  var canvas = el.board;
+  var ctx = canvas.getContext('2d');
+
+  /* ================= 积分存储 ================= */
+  function defaultScores(){
+    return {
+      blackWins:0, whiteWins:0, draws:0, total:0,
+      pveW:0, pveL:0, pveD:0,
+      blackPoints:0, whitePoints:0, pvePoints:0, aiPoints:0
+    };
+  }
+  function loadScores(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return defaultScores();
+      var o = JSON.parse(raw), d = defaultScores();
+      for(var k in d){ if(typeof o[k] === 'number') d[k] = o[k]; }
+      return d;
+    }catch(e){ return defaultScores(); }
+  }
+  function saveScores(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(scores)); }catch(e){}
+  }
+  var scores = loadScores();
+
+  function renderScores(){
+    el.scBlackPoints.textContent = scores.blackPoints;
+    el.scWhitePoints.textContent = scores.whitePoints;
+    el.scBlackSub.textContent = scores.blackWins + ' 胜';
+    el.scWhiteSub.textContent = scores.whiteWins + ' 胜';
+    el.scDraw.textContent  = scores.draws;
+    el.scTotal.textContent = scores.total;
+    el.scPveW.textContent  = scores.pveW;
+    el.scPveL.textContent  = scores.pveL;
+    el.scPveD.textContent  = scores.pveD;
+    el.scPvePoints.textContent = scores.pvePoints;
+    el.scAiPoints.textContent = scores.aiPoints;
+  }
+
+  /* ================= 设置弹窗状态 ================= */
+  // 首次访问（无存储记录）自动弹出；之后沿用用户上次的选择
+  function readSettingsOpen(){
+    try{
+      var v = localStorage.getItem(SETTINGS_OPEN_KEY);
+      if(v === null || v === undefined || v === '') return true;
+      return v !== '0';
+    }catch(e){ return true; }
+  }
+  function isSettingsOpen(){
+    return !document.documentElement.classList.contains('settings-modal-closed');
+  }
+  function applySettingsOpen(open, persist){
+    document.documentElement.classList.toggle('settings-modal-closed', !open);
+    el.settingsPanel.classList.toggle('modal-open', open);
+    el.settingsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    el.settingsOverlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.style.overflow = open ? 'hidden' : '';
+    if(persist){
+      try{ localStorage.setItem(SETTINGS_OPEN_KEY, open ? '1' : '0'); }catch(e){}
+    }
+  }
+  var lastFocused = null;
+  function openSettings(manual){
+    if(isSettingsOpen()) return;
+    if(manual) lastFocused = document.activeElement;
+    applySettingsOpen(true, true);
+    if(manual && el.settingsClose && el.settingsClose.focus) el.settingsClose.focus();
+  }
+  function closeSettings(){
+    if(!isSettingsOpen()) return;
+    applySettingsOpen(false, true);
+    if(lastFocused && lastFocused.focus) lastFocused.focus();
+    lastFocused = null;
+  }
+
+  /* ================= 地狱难度免责声明状态 ================= */
+  var hellDialogOpen = false;
+  var hellPreviousDifficulty = null;
+  var hellPendingButton = null;
+  function isHellDialogOpen(){ return hellDialogOpen; }
+  function syncDifficultyActive(){
+    var box = document.getElementById('segDiff');
+    if(!box || !box.querySelectorAll) return;
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){
+      b.classList.toggle('active', b.dataset.value === state.difficulty);
+    });
+  }
+  function openHellDialog(btn){
+    hellPreviousDifficulty = state.difficulty;
+    hellPendingButton = btn;
+    hellDialogOpen = true;
+    el.hellOverlay.classList.add('open');
+    el.hellOverlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    if(el.hellContinue && el.hellContinue.focus) el.hellContinue.focus();
+  }
+  function closeHellDialog(restore){
+    if(!hellDialogOpen) return;
+    hellDialogOpen = false;
+    el.hellOverlay.classList.remove('open');
+    el.hellOverlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = isSettingsOpen() ? 'hidden' : '';
+    if(restore){
+      state.difficulty = hellPreviousDifficulty;
+      syncDifficultyActive();
+      setStatus('已取消地狱难度，请重新选择 AI 难度');
+    }
+    if(hellPendingButton && hellPendingButton.focus) hellPendingButton.focus();
+    hellPendingButton = null;
+    hellPreviousDifficulty = null;
+  }
+  function confirmHell(){
+    if(!hellDialogOpen) return;
+    hellDialogOpen = false;
+    el.hellOverlay.classList.remove('open');
+    el.hellOverlay.setAttribute('aria-hidden', 'true');
+    hellPendingButton = null;
+    hellPreviousDifficulty = null;
+    state.difficulty = 'hell';
+    syncDifficultyActive();
+    closeSettings();       // 确认后退出设置弹窗，直接进入新对局
+    initGame();
+  }
+
+  /* ================= 工具函数 ================= */
+  function aiColor(){ return state.humanColor === 1 ? 2 : 1; }
+  function colorName(c){ return c === 1 ? '黑方' : '白方'; }
+  function canHumanPlay(){
+    return !state.gameOver && (state.mode === 'pvp' || state.currentPlayer === state.humanColor);
+  }
+  function fmtTime(ms){
+    var s = Math.floor(ms/1000);
+    var m = Math.floor(s/60);
+    s = s % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  function setStatus(text, type){
+    el.statusText.textContent = text;
+    el.status.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  /* ================= 棋盘绘制 ================= */
+  function resizeCanvas(){
+    var cssSize = canvas.getBoundingClientRect().width;
+    if(!cssSize) return;
+    var dpr = window.devicePixelRatio || 1;
+    var px = Math.round(cssSize * dpr);
+    if(canvas.width !== px || canvas.height !== px){
+      canvas.width = px; canvas.height = px;
+    }
+    geom.size = cssSize;
+    geom.pad = Math.max(16, cssSize * 0.065);
+    geom.cell = (cssSize - 2*geom.pad) / (N - 1);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    drawBoard();
+  }
+
+  function drawBoard(){
+    if(!geom.size) return;
+    var s = geom.size, pad = geom.pad, cell = geom.cell;
+
+    // 木质底色
+    var g = ctx.createLinearGradient(0,0,s,s);
+    g.addColorStop(0,'#f4dfb4'); g.addColorStop(0.45,'#e8c88d'); g.addColorStop(1,'#d3a460');
+    ctx.fillStyle = g; ctx.fillRect(0,0,s,s);
+
+    // 木纹
+    ctx.save();
+    ctx.globalAlpha = 0.07; ctx.strokeStyle = '#6b4318'; ctx.lineWidth = 1.2;
+    for(var i=0;i<14;i++){
+      var y = (i/13)*s;
+      ctx.beginPath(); ctx.moveTo(0,y);
+      for(var x=0;x<=s;x+=18){ ctx.lineTo(x, y + Math.sin(x/s*7 + i*1.3)*3.2); }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 网格
+    ctx.strokeStyle = 'rgba(78,48,18,.78)';
+    ctx.lineWidth = Math.max(0.9, s/560*1.05);
+    ctx.beginPath();
+    for(var k=0;k<N;k++){
+      var p = pad + k*cell;
+      ctx.moveTo(pad, p); ctx.lineTo(s-pad, p);
+      ctx.moveTo(p, pad); ctx.lineTo(p, s-pad);
+    }
+    ctx.stroke();
+
+    // 外框加粗
+    ctx.lineWidth = Math.max(1.6, s/560*2);
+    ctx.strokeRect(pad, pad, cell*(N-1), cell*(N-1));
+
+    // 星位
+    ctx.fillStyle = 'rgba(60,36,12,.85)';
+    var stars = [];
+    if(N === 15){ stars = [[3,3],[3,11],[7,7],[11,3],[11,11]]; }
+    else if(N === 12){ stars = [[3,3],[3,8],[8,3],[8,8]]; }
+    else if(N === 10){ stars = [[2,2],[2,7],[7,2],[7,7]]; }
+    for(var t=0;t<stars.length;t++){
+      ctx.beginPath();
+      ctx.arc(pad+stars[t][1]*cell, pad+stars[t][0]*cell, Math.max(2.2, cell*0.09), 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // 悬停预览
+    if(hover && canHumanPlay() && state.board[hover.r][hover.c] === 0){
+      var hx = pad+hover.c*cell, hy = pad+hover.r*cell;
+      var bad = state.currentPlayer === 1 && state.forbidden && isForbidden(hover.r, hover.c);
+      ctx.save();
+      ctx.globalAlpha = 0.42;
+      drawStone(hx, hy, state.currentPlayer, false, bad);
+      ctx.restore();
+    }
+
+    // 棋子
+    for(var r=0;r<N;r++){
+      for(var c=0;c<N;c++){
+        if(state.board[r][c] !== 0){
+          var isLast = state.lastMove && state.lastMove.r===r && state.lastMove.c===c;
+          drawStone(pad+c*cell, pad+r*cell, state.board[r][c], isLast, false);
+        }
+      }
+    }
+
+    // 获胜连线
+    if(state.winLine && state.winLine.length){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(15,108,189,.9)';
+      ctx.lineWidth = Math.max(3, cell*0.14);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.shadowColor = 'rgba(15,108,189,.5)'; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      for(var q=0;q<state.winLine.length;q++){
+        var xx = pad+state.winLine[q][1]*cell, yy = pad+state.winLine[q][0]*cell;
+        if(q===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawStone(x,y,color,isLast,isBad){
+    var rad = geom.cell * 0.455;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2); ctx.closePath();
+    ctx.shadowColor = isBad ? 'rgba(177,14,28,.5)' : 'rgba(0,0,0,.38)';
+    ctx.shadowBlur = rad*0.45; ctx.shadowOffsetY = rad*0.2;
+    var gr = ctx.createRadialGradient(x-rad*0.35,y-rad*0.42,rad*0.08,x,y,rad);
+    if(color === 1){
+      gr.addColorStop(0,'#7d7d7d'); gr.addColorStop(0.45,'#2b2b2b'); gr.addColorStop(1,'#050505');
+    }else{
+      gr.addColorStop(0,'#ffffff'); gr.addColorStop(0.55,'#f2f2f2'); gr.addColorStop(1,'#cfcfcf');
+    }
+    ctx.fillStyle = isBad ? '#e08a92' : gr;
+    ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = color===1 ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.22)';
+    ctx.stroke();
+    if(isLast){
+      ctx.beginPath(); ctx.arc(x,y,rad*0.18,0,Math.PI*2);
+      ctx.fillStyle = color===1 ? '#e8e8e8' : '#444';
+      ctx.fill();
+    }
+    if(isBad){
+      ctx.strokeStyle = '#b10e1c'; ctx.lineWidth = Math.max(2,rad*0.2); ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(x-rad*0.42,y-rad*0.42); ctx.lineTo(x+rad*0.42,y+rad*0.42);
+      ctx.moveTo(x+rad*0.42,y-rad*0.42); ctx.lineTo(x-rad*0.42,y+rad*0.42);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function eventToCell(e){
+    var rect = canvas.getBoundingClientRect();
+    if(!rect.width) return null;
+    var x = e.clientX - rect.left, y = e.clientY - rect.top;
+    var c = Math.round((x - geom.pad)/geom.cell);
+    var r = Math.round((y - geom.pad)/geom.cell);
+    if(r<0||r>=N||c<0||c>=N) return null;
+    var gx = geom.pad + c*geom.cell, gy = geom.pad + r*geom.cell;
+    if(Math.hypot(x-gx, y-gy) > geom.cell*0.62) return null;
+    return {r:r, c:c};
+  }
+
+  /* ================= 棋形分析（供 AI 与禁手共用） ================= */
+  function buildLine(r,c,dr,dc,color,board){
+    var s = '';
+    for(var k=-5;k<=5;k++){
+      if(k === 0){ s += 'x'; continue; }
+      var rr = r+k*dr, cc = c+k*dc;
+      if(rr<0||rr>=N||cc<0||cc>=N){ s += '#'; continue; }
+      var v = board[rr][cc];
+      s += (v === color ? 'x' : (v === 0 ? '.' : '#'));
+    }
+    return s;
+  }
+
+  function analyzeLine(line){
+    var start=5,end=5;
+    while(start>0 && line[start-1]==='x') start--;
+    while(end<10 && line[end+1]==='x') end++;
+    var run = end-start+1;
+    var leftOpen = start>0 && line[start-1]==='.';
+    var rightOpen = end<10 && line[end+1]==='.';
+    var endOpen = (leftOpen?1:0)+(rightOpen?1:0);
+
+    // 再落一子能成五的位置数量（用于判断冲四/活四）
+    var winPts = 0;
+    for(var i=0;i<11;i++){
+      if(line[i] !== '.') continue;
+      var cur=0,mx=0;
+      for(var j=0;j<11;j++){
+        var ch = (j===i) ? 'x' : line[j];
+        if(ch==='x'){ cur++; if(cur>mx) mx=cur; } else cur=0;
+      }
+      if(mx>=5) winPts++;
+    }
+    return {run:run, endOpen:endOpen, winPts:winPts};
+  }
+
+  // 是否可形成“活四”（.xxxx.），用于识别活三与跳三
+  function canMakeOpenFour(line){
+    for(var i=0;i<11;i++){
+      if(line[i] !== '.') continue;
+      var arr = line.split(''); arr[i] = 'x';
+      var s2 = arr.join('');
+      for(var j=0;j+5<11;j++){
+        if(s2.slice(j,j+6) === '.xxxx.') return true;
+      }
+    }
+    return false;
+  }
+
+  function patternValue(line){
+    var a = analyzeLine(line);
+    if(a.run >= 5) return 5000000;
+    if(a.winPts >= 2) return 500000;   // 活四
+    if(a.winPts >= 1) return 50000;    // 冲四 / 跳四
+    if(canMakeOpenFour(line)) return 10000; // 活三
+    if(a.run === 3) return a.endOpen===2 ? 3000 : 300;
+    if(a.run === 2) return a.endOpen===2 ? 300 : 30;
+    if(a.run === 1) return 8;
+    return 0;
+  }
+
+  function evalPoint(r,c,color){
+    var board = state.board;
+    var old = board[r][c];
+    board[r][c] = color;
+    var total = 0;
+    for(var d=0; d<4; d++){
+      total += patternValue(buildLine(r,c,DIRS[d][0],DIRS[d][1],color,board));
+    }
+    board[r][c] = old;
+    return total;
+  }
+
+  /* ================= 禁手判定（黑棋） ================= */
+  // 返回 false 表示可落子，否则返回禁手名称
+  function isForbidden(r,c){
+    if(!state.forbidden) return false;
+    var board = state.board;
+    var old = board[r][c];
+    board[r][c] = 1;
+    var fourDirs = 0, threeDirs = 0, five = false, overline = false;
+
+    for(var d=0; d<4; d++){
+      var line = buildLine(r,c,DIRS[d][0],DIRS[d][1],1,board);
+      var a = analyzeLine(line);
+      if(a.run >= 6) overline = true;
+      if(a.run === 5) five = true;
+      if(a.run < 5){
+        if(a.winPts >= 1) fourDirs++;
+        if(canMakeOpenFour(line)) threeDirs++;
+      }
+    }
+    board[r][c] = old;
+
+    if(overline) return '长连禁手';
+    if(five) return false;            // 成五优先，允许落子
+    if(fourDirs >= 2) return '四四禁手';
+    if(threeDirs >= 2) return '三三禁手';
+    return false;
+  }
+
+  /* ================= 胜负判定 ================= */
+  function hasFiveAt(r,c,color){
+    var board = state.board;
+    for(var d=0; d<4; d++){
+      var dr=DIRS[d][0], dc=DIRS[d][1], n=1, k, rr, cc;
+      for(k=1;;k++){ rr=r+k*dr; cc=c+k*dc; if(rr<0||rr>=N||cc<0||cc>=N||board[rr][cc]!==color) break; n++; }
+      for(k=1;;k++){ rr=r-k*dr; cc=c-k*dc; if(rr<0||rr>=N||cc<0||cc>=N||board[rr][cc]!==color) break; n++; }
+      if(color === 2 && n >= 5) return true;
+      if(color === 1){
+        if(state.forbidden){ if(n === 5) return true; }
+        else if(n >= 5) return true;
+      }
+    }
+    return false;
+  }
+
+  function checkWin(r,c,color){
+    var board = state.board;
+    for(var d=0; d<4; d++){
+      var dr=DIRS[d][0], dc=DIRS[d][1];
+      var fwd=[], bwd=[], k, rr, cc;
+      for(k=1;;k++){ rr=r+k*dr; cc=c+k*dc; if(rr<0||rr>=N||cc<0||cc>=N||board[rr][cc]!==color) break; fwd.push([rr,cc]); }
+      for(k=1;;k++){ rr=r-k*dr; cc=c-k*dc; if(rr<0||rr>=N||cc<0||cc>=N||board[rr][cc]!==color) break; bwd.push([rr,cc]); }
+      var run = fwd.length + bwd.length + 1;
+      var ok = (color === 2) ? (run >= 5) : (state.forbidden ? (run === 5) : (run >= 5));
+      if(ok){
+        var line = bwd.reverse().concat([[r,c]], fwd);
+        return line;
+      }
+    }
+    return null;
+  }
+
+  /* ================= AI ================= */
+  function isNearStone(r,c,dist){
+    for(var dr=-dist; dr<=dist; dr++){
+      for(var dc=-dist; dc<=dist; dc++){
+        if(dr===0 && dc===0) continue;
+        var rr=r+dr, cc=c+dc;
+        if(rr<0||rr>=N||cc<0||cc>=N) continue;
+        if(state.board[rr][cc] !== 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function getCandidates(color, other, limit){
+    var list = [], r, c;
+    var hasAny = false;
+    outer:
+    for(r=0;r<N;r++){
+      for(c=0;c<N;c++){
+        if(state.board[r][c] !== 0){ hasAny = true; break outer; }
+      }
+    }
+    if(!hasAny){
+      var mid = Math.floor(N/2);
+      return [{r:mid, c:mid, score:0}];
+    }
+    for(r=0;r<N;r++){
+      for(c=0;c<N;c++){
+        if(state.board[r][c] !== 0) continue;
+        if(!isNearStone(r,c,2)) continue;
+        var attack = evalPoint(r,c,color);
+        var defend = evalPoint(r,c,other);
+        var bias = (N - Math.abs(r-(N-1)/2) - Math.abs(c-(N-1)/2)) * 1.5;
+        list.push({r:r, c:c, score: attack + defend*0.85 + bias});
+      }
+    }
+    list.sort(function(a,b){ return b.score - a.score; });
+    return list.slice(0, limit);
+  }
+
+  function evalBoard(color, limit){
+    var other = color===1?2:1, s=0, i;
+    var top = limit || aiCfg.evalTop;
+    var a = getCandidates(color, other, top);
+    for(i=0;i<a.length;i++) s += evalPoint(a[i].r,a[i].c,color);
+    var b = getCandidates(other, color, top);
+    for(i=0;i<b.length;i++) s -= evalPoint(b[i].r,b[i].c,other)*aiCfg.defend;
+    return s;
+  }
+
+  function negamax(color, depth, alpha, beta, beam, deadline){
+    // 深层节点压缩评估面，保证加深搜索后仍能按时返回
+    if(depth === 0 || performance.now() > deadline){
+      return evalBoard(color, Math.max(5, aiCfg.evalTop - (aiCfg.depth - depth) * 2));
+    }
+    var other = color===1?2:1;
+    var cands = getCandidates(color, other, beam);
+    if(!cands.length) return 0;
+    var best = -Infinity;
+    for(var i=0;i<cands.length;i++){
+      var m = cands[i];
+      state.board[m.r][m.c] = color;
+      var sc;
+      if(hasFiveAt(m.r,m.c,color)) sc = 10000000 + depth;
+      else if(color===1 && state.forbidden && isForbidden(m.r,m.c)) sc = -10000000;
+      else sc = -negamax(other, depth-1, -beta, -alpha, Math.max(3, beam-1), deadline);
+      state.board[m.r][m.c] = 0;
+      if(sc > best) best = sc;
+      if(best > alpha) alpha = best;
+      if(alpha >= beta) break;
+    }
+    return best;
+  }
+
+  function chooseAiMove(){
+    aiCfg = AI_CONFIG[state.difficulty] || AI_CONFIG.medium;
+    var ai = state.currentPlayer, human = ai===1?2:1;
+    var cands = getCandidates(ai, human, aiCfg.cands);
+    if(!cands.length){ var mid=Math.floor(N/2); return {r:mid,c:mid}; }
+
+    if(state.difficulty === 'easy'){
+      // 弱 AI：在前若干候选里随机挑选，保留基本棋感但容易出错
+      var top = Math.min(cands.length, aiCfg.randomTop);
+      return cands[Math.floor(Math.random()*top)];
+    }
+
+    // 无非是“能赢就赢，对方要赢就堵”
+    var i, m;
+    for(i=0;i<cands.length;i++){
+      m = cands[i];
+      state.board[m.r][m.c] = ai;
+      var win = hasFiveAt(m.r,m.c,ai);
+      state.board[m.r][m.c] = 0;
+      if(win) return m;
+    }
+    var opp = getCandidates(human, ai, aiCfg.cands);
+    for(i=0;i<opp.length;i++){
+      m = opp[i];
+      state.board[m.r][m.c] = human;
+      var lose = hasFiveAt(m.r,m.c,human);
+      state.board[m.r][m.c] = 0;
+      if(lose) return m;
+    }
+
+    var legal = cands.filter(function(x){
+      return !(ai===1 && state.forbidden && isForbidden(x.r,x.c));
+    });
+    if(!legal.length) legal = cands;
+
+    if(state.difficulty === 'medium'){
+      return legal[0];
+    }
+
+    // 困难 / 地狱：更宽的候选面、更深的搜索与更高的触发门槛
+    var roots = getCandidates(ai, human, aiCfg.roots).filter(function(x){
+      return !(ai===1 && state.forbidden && isForbidden(x.r,x.c));
+    });
+    if(!roots.length) roots = legal;
+    var bestMove = roots[0], best = -Infinity;
+    var deadline = performance.now() + aiCfg.deadline;
+    for(i=0;i<roots.length;i++){
+      m = roots[i];
+      state.board[m.r][m.c] = ai;
+      var sc;
+      if(hasFiveAt(m.r,m.c,ai)) sc = 100000000;
+      else sc = -negamax(human, aiCfg.depth, -Infinity, Infinity, aiCfg.beam, deadline);
+      state.board[m.r][m.c] = 0;
+      if(sc > best){ best = sc; bestMove = m; }
+      if(performance.now() > deadline) break;
+    }
+    return bestMove;
+  }
+
+  /* ================= AI 异步调度（避免主线程卡死） ================= */
+  // 用现有 AI 函数源码拼出 Worker 脚本，保证Worker与主线程使用完全相同的规则与阈值
+  function buildAiWorkerSource(){
+    var fns = [buildLine, analyzeLine, canMakeOpenFour, patternValue, evalPoint,
+               isForbidden, hasFiveAt, isNearStone, getCandidates, evalBoard,
+               negamax, chooseAiMove];
+    return [
+      'var DIRS=' + JSON.stringify(DIRS) + ';',
+      'var AI_CONFIG=' + JSON.stringify(AI_CONFIG) + ';',
+      'var N=15, aiCfg=AI_CONFIG.medium, state={board:[],forbidden:false,currentPlayer:1};',
+      fns.map(function(f){ return f.toString(); }).join('\n'),
+      'self.onmessage=function(e){',
+      '  var d=e.data;',
+      '  N=d.n;',
+      '  state={board:d.board,forbidden:d.forbidden,currentPlayer:d.player};',
+      '  aiCfg=AI_CONFIG[d.difficulty]||AI_CONFIG.medium;',
+      '  self.postMessage({id:d.id,move:chooseAiMove()});',
+      '};'
+    ].join('\n');
+  }
+
+  function ensureAiWorker(){
+    if(aiWorkerBroken) return null;
+    if(aiWorker) return aiWorker;
+    if(typeof Worker === 'undefined' || typeof Blob === 'undefined' ||
+       typeof URL === 'undefined' || !URL.createObjectURL){
+      aiWorkerBroken = true; return null;
+    }
+    try{
+      var blob = new Blob([buildAiWorkerSource()], {type:'text/javascript'});
+      var url = URL.createObjectURL(blob);
+      var w = new Worker(url);
+      setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 0);
+      w.onmessage = function(e){
+        var d = e.data || {};
+        aiWorkerBusy = false;
+        if(d.id !== aiReqId) return;      // 已被悔棋/重开/换难度取消
+        applyAiMove(d.move, d.id);
+      };
+      w.onerror = function(){
+        aiWorkerBroken = true; aiWorkerBusy = false;
+        try{ w.terminate(); }catch(e){}
+        aiWorker = null;
+        if(aiFallbackId) setTimeout(function(){ runAiFallback(aiFallbackId); }, 0);
+      };
+      aiWorker = w;
+      return w;
+    }catch(e){ aiWorkerBroken = true; return null; }
+  }
+
+  // 取消尚未完成的 AI 请求；正在计算的 Worker 直接终止，避免过期结果落子
+  function cancelAiWork(){
+    aiReqId++;
+    aiFallbackId = 0;
+    clearTimeout(aiTimer); aiTimer = null;
+    if(aiWorkerBusy && aiWorker){
+      try{ aiWorker.terminate(); }catch(e){}
+      aiWorker = null;
+    }
+    aiWorkerBusy = false;
+  }
+
+  // Worker 不可用时的兜底：按根节点分片搜索，每片之间让出主线程
+  function runAiFallback(id){
+    if(id !== aiReqId || state.gameOver) return;
+    aiCfg = AI_CONFIG[state.difficulty] || AI_CONFIG.medium;
+    var ai = state.currentPlayer, human = ai===1?2:1, i, m;
+    var cands = getCandidates(ai, human, aiCfg.cands);
+    if(!cands.length){
+      applyAiMove({r:Math.floor(N/2), c:Math.floor(N/2)}, id); return;
+    }
+    // 与 Worker 版一致：先处理必赢、必堵
+    for(i=0;i<cands.length;i++){
+      m = cands[i];
+      state.board[m.r][m.c] = ai;
+      var win = hasFiveAt(m.r,m.c,ai);
+      state.board[m.r][m.c] = 0;
+      if(win){ applyAiMove(m, id); return; }
+    }
+    var opp = getCandidates(human, ai, aiCfg.cands);
+    for(i=0;i<opp.length;i++){
+      m = opp[i];
+      state.board[m.r][m.c] = human;
+      var lose = hasFiveAt(m.r,m.c,human);
+      state.board[m.r][m.c] = 0;
+      if(lose){ applyAiMove(m, id); return; }
+    }
+    var legal = cands.filter(function(x){
+      return !(ai===1 && state.forbidden && isForbidden(x.r,x.c));
+    });
+    if(!legal.length) legal = cands;
+    if(state.difficulty === 'easy' || state.difficulty === 'medium'){
+      applyAiMove(state.difficulty === 'easy'
+        ? cands[Math.floor(Math.random()*Math.min(cands.length, aiCfg.randomTop))]
+        : legal[0], id);
+      return;
+    }
+    var roots = getCandidates(ai, human, aiCfg.roots).filter(function(x){
+      return !(ai===1 && state.forbidden && isForbidden(x.r,x.c));
+    });
+    if(!roots.length) roots = legal;
+    var index = 0, best = roots[0], bestScore = -Infinity;
+    var deadline = performance.now() + aiCfg.deadline;
+    function step(){
+      if(id !== aiReqId || state.gameOver) return;
+      if(index >= roots.length || performance.now() > deadline){
+        applyAiMove(best, id); return;
+      }
+      var mv = roots[index++];
+      state.board[mv.r][mv.c] = ai;
+      var sc = hasFiveAt(mv.r,mv.c,ai)
+        ? 100000000
+        : -negamax(human, aiCfg.depth, -Infinity, Infinity, aiCfg.beam, deadline);
+      state.board[mv.r][mv.c] = 0;
+      if(sc > bestScore){ bestScore = sc; best = mv; }
+      setTimeout(step, 0);
+    }
+    step();
+  }
+
+  function requestAiMove(){
+    var id = aiReqId;
+    var w = ensureAiWorker();
+    if(!w){
+      aiFallbackId = id;
+      setTimeout(function(){ runAiFallback(id); }, 0);
+      return;
+    }
+    aiWorkerBusy = true; aiFallbackId = id;
+    try{
+      w.postMessage({
+        id: id,
+        n: N,
+        board: state.board.map(function(row){ return row.slice(); }),
+        forbidden: state.forbidden,
+        player: state.currentPlayer,
+        difficulty: state.difficulty
+      });
+    }catch(e){
+      aiWorkerBroken = true; aiWorkerBusy = false; aiWorker = null;
+      setTimeout(function(){ runAiFallback(id); }, 0);
+    }
+  }
+
+  function applyAiMove(mv, id){
+    if(id !== aiReqId || state.gameOver) return;
+    if(state.mode !== 'pve' || state.currentPlayer === state.humanColor) return;
+    if(!mv || mv.r<0 || mv.r>=N || mv.c<0 || mv.c>=N || state.board[mv.r][mv.c]!==0) return;
+    placeStone(mv.r, mv.c);
+  }
+
+  /* ================= 对局流程 ================= */
+  function initGame(){
+    cancelAiWork();
+    N = state.boardSize;
+    state.board = [];
+    for(var r=0;r<N;r++) state.board.push(new Array(N).fill(0));
+    state.history = [];
+    state.currentPlayer = state.firstPlayer;
+    state.moveCount = 0;
+    state.gameOver = false;
+    state.winner = 0;
+    state.winLine = null;
+    state.lastMove = null;
+    state.clocks = {1:0, 2:0};
+    state.undoCount = {1:0, 2:0};
+    state.gamePoints = {1:0, 2:0};
+    state.settled = false;
+    state.scoreSnapshot = null;
+    hover = null;
+    lastTick = performance.now();
+    resizeCanvas();
+    updateUI();
+    maybeAiMove();
+  }
+
+  function maybeAiMove(){
+    cancelAiWork();
+    if(state.gameOver) return;
+    if(state.mode === 'pve' && state.currentPlayer !== state.humanColor){
+      setStatus('AI（' + diffLabel() + '）思考中… 你仍可悔棋或重新开始', 'thinking');
+      aiTimer = setTimeout(function(){
+        aiTimer = null;
+        if(state.gameOver) return;
+        requestAiMove();
+      }, state.difficulty === 'hard' ? 480 : (state.difficulty === 'hell' ? 220 : 320));
+    }else{
+      var who = state.mode === 'pve' ? '轮到你落子' : colorName(state.currentPlayer) + '落子';
+      setStatus(who + ' · ' + colorName(state.currentPlayer));
+    }
+  }
+
+  function placeStone(r,c){
+    if(state.gameOver) return false;
+    if(r<0||r>=N||c<0||c>=N) return false;
+    if(state.board[r][c] !== 0) return false;
+    var color = state.currentPlayer;
+    if(color === 1 && state.forbidden){
+      var f = isForbidden(r,c);
+      if(f){
+        setStatus('禁手！黑棋不能在此落子（' + f + '）', 'warn');
+        drawBoard();
+        return false;
+      }
+    }
+
+    state.board[r][c] = color;
+    state.history.push({r:r, c:c, color:color});
+    state.moveCount = state.history.length;
+    state.lastMove = {r:r, c:c, color:color};
+
+    var line = checkWin(r,c,color);
+    if(line){ endGame(color, line); return true; }
+    if(state.moveCount >= 100){ endGame(0, null, '平局：已满 100 手'); return true; }
+
+    state.currentPlayer = color===1 ? 2 : 1;
+    hover = null;
+    updateUI();
+    drawBoard();
+    maybeAiMove();
+    return true;
+  }
+
+  /* 地狱难度专属积分：悔棋免扣、获胜 +50、失败倒扣 5（积分为 0 不扣）、平局不加分 */
+  function isHellScoring(){ return state.difficulty === 'hell'; }
+  function isPlayerSide(color){ return state.mode === 'pvp' || color === state.humanColor; }
+  function penaltyFor(color){
+    if(isHellScoring() && isPlayerSide(color)) return 0;
+    return state.undoCount[color];
+  }
+  function winScoreFor(color){
+    if(!isHellScoring()) return 10;
+    return isPlayerSide(color) ? 50 : 10;  // AI 失败不扣分，AI 获胜仍按 +10
+  }
+  function rawScoreDelta(color, winner){
+    if(isHellScoring()){
+      if(winner === 0) return 0;                        // 平局双方都不加分
+      if(winner === color) return winScoreFor(color);   // 胜方得分
+      return isPlayerSide(color) ? -5 : 0;              // 玩家失败倒扣 5，AI 失败不扣分
+    }
+    return winner === color ? 10 : (winner === 0 ? 5 : 0);
+  }
+  function clampLoss(current, delta){
+    return delta >= 0 ? delta : -Math.min(-delta, current); // 积分为 0 时不再扣
+  }
+  function fmtDelta(v){ return (v > 0 ? '+' : '') + v; }
+
+  function endGame(winner, line, reason){
+    state.gameOver = true;
+    state.winner = winner;
+    state.winLine = line;
+    cancelAiWork();
+    state.scoreSnapshot = Object.assign({}, scores);
+    state.settled = true;
+
+    var undo1 = penaltyFor(1), undo2 = penaltyFor(2);
+    var raw1 = rawScoreDelta(1, winner), raw2 = rawScoreDelta(2, winner);
+    // 悔棋扣分只从本局所得积分中扣，扣完即止
+    var undoDeduct1 = raw1 > 0 ? Math.min(undo1, raw1) : 0;
+    var undoDeduct2 = raw2 > 0 ? Math.min(undo2, raw2) : 0;
+    raw1 -= undoDeduct1; raw2 -= undoDeduct2;
+
+    var delta1 = clampLoss(scores.blackPoints, raw1);
+    var delta2 = clampLoss(scores.whitePoints, raw2);
+    state.gamePoints = {1: delta1, 2: delta2};
+
+    scores.total++;
+    if(winner === 0){ scores.draws++; }
+    else if(winner === 1){ scores.blackWins++; }
+    else { scores.whiteWins++; }
+    scores.blackPoints += delta1;
+    scores.whitePoints += delta2;
+    if(state.mode === 'pve'){
+      if(winner === 0) scores.pveD++;
+      else if(winner === state.humanColor) scores.pveW++;
+      else scores.pveL++;
+      var hRaw = state.humanColor === 1 ? raw1 : raw2;
+      var aRaw = state.humanColor === 1 ? raw2 : raw1;
+      scores.pvePoints += clampLoss(scores.pvePoints, hRaw);
+      scores.aiPoints   += clampLoss(scores.aiPoints, aRaw);
+    }
+    saveScores(); renderScores();
+
+    var msg, type = winner === 0 ? 'draw' : 'win';
+    if(winner === 0){
+      msg = isHellScoring()
+        ? (reason || '平局') + '，地狱难度双方均不加分'
+        : (reason || '平局') + '，双方各 +5 分';
+    }else if(state.mode === 'pve'){
+      var mine = state.humanColor === 1 ? delta1 : delta2;
+      var rawMine = state.humanColor === 1 ? raw1 : raw2;
+      if(winner === state.humanColor){
+        msg = '恭喜，你赢了！本局 ' + fmtDelta(mine) + ' 分';
+      }else if(mine < 0){
+        msg = 'AI 获胜，本局你 ' + mine + ' 分（失败倒扣 5 分）';
+      }else if(isHellScoring() && rawMine < 0){
+        msg = 'AI 获胜，本局你 0 分（积分不足，未扣分）';
+      }else{
+        msg = 'AI 获胜，再来一局？本局你 ' + fmtDelta(mine) + ' 分';
+      }
+    }else{
+      var wd = winner === 1 ? delta1 : delta2;
+      msg = colorName(winner) + '获胜！本局 ' + fmtDelta(wd) + ' 分';
+      if(isHellScoring() && wd < 0) msg += '（失败倒扣 5 分）';
+    }
+    var deducted = undoDeduct1 + undoDeduct2;
+    if(deducted > 0) msg += '（悔棋扣 ' + deducted + ' 分）';
+    if(isHellScoring() && winner !== 0 && (state.mode === 'pvp' || winner === state.humanColor)){
+      msg += '（地狱难度奖励）';
+    }
+    setStatus(msg, type);
+    updateUI();
+    drawBoard();
+  }
+
+  function undo(){
+    var count;
+    if(state.history.length === 0) return;
+    // 若已结算过，先回滚本局已计入的积分，避免重复累计
+    if(state.settled && state.scoreSnapshot){
+      Object.keys(scores).forEach(function(k){ scores[k] = state.scoreSnapshot[k]; });
+      state.settled = false;
+      state.scoreSnapshot = null;
+      state.gamePoints = {1:0, 2:0};
+      saveScores(); renderScores();
+    }
+    // 悔棋只记录次数，实际扣分在结算时从本局积分中扣除
+    var penalized = state.mode === 'pve' ? state.humanColor : state.currentPlayer;
+    state.undoCount[penalized]++;
+    cancelAiWork();
+    if(state.mode === 'pve'){
+      count = (state.currentPlayer === aiColor()) ? 1 : 2;
+    }else{
+      count = 1;
+    }
+    count = Math.min(count, state.history.length);
+    for(var i=0;i<count;i++){
+      var m = state.history.pop();
+      state.board[m.r][m.c] = 0;
+    }
+    state.moveCount = state.history.length;
+    state.lastMove = state.history.length ? Object.assign({}, state.history[state.history.length-1]) : null;
+    state.gameOver = false;
+    state.winner = 0;
+    state.winLine = null;
+    state.currentPlayer = state.history.length
+      ? (state.history[state.history.length-1].color===1 ? 2 : 1)
+      : state.firstPlayer;
+    hover = null;
+    updateUI();
+    drawBoard();
+    maybeAiMove();
+  }
+
+  function updateUI(){
+    el.name1.textContent = '黑方';
+    el.name2.textContent = '白方';
+    var dl = diffLabel();
+    if(state.mode === 'pve'){
+      el.role1.textContent = state.humanColor===1 ? '玩家' : 'AI · ' + dl;
+      el.role2.textContent = state.humanColor===2 ? '玩家' : 'AI · ' + dl;
+      el.role1.className = 'prole' + (state.humanColor===2 ? ' ai-' + state.difficulty : '');
+      el.role2.className = 'prole' + (state.humanColor===1 ? ' ai-' + state.difficulty : '');
+    }else{
+      el.role1.textContent = '玩家一';
+      el.role2.textContent = '玩家二';
+      el.role1.className = 'prole';
+      el.role2.className = 'prole';
+    }
+    if(el.diffBadge){
+      el.diffBadge.textContent = '难度：' + dl + (state.mode === 'pve' ? '' : '（未启用）');
+      el.diffBadge.className = 'badge diff-badge diff-' + state.difficulty + (state.mode === 'pve' ? '' : ' diff-off');
+    }
+    el.card1.classList.toggle('active', !state.gameOver && state.currentPlayer===1);
+    el.card2.classList.toggle('active', !state.gameOver && state.currentPlayer===2);
+    el.ptag1.textContent = playerTag(1);
+    el.ptag1.className = 'ptag' + (penaltyFor(1) > 0 ? ' penalty' : '');
+    el.ptag2.textContent = playerTag(2);
+    el.ptag2.className = 'ptag' + (penaltyFor(2) > 0 ? ' penalty' : '');
+    el.moveNo.textContent = state.moveCount;
+    el.btnUndo.disabled = state.history.length === 0;
+    el.forbidBadge.textContent = '禁手：' + (state.forbidden ? '开' : '关');
+    el.forbidBadge.classList.toggle('on', state.forbidden);
+    updateClocks();
+  }
+  function playerTag(color){
+    var u = state.undoCount[color], p = penaltyFor(color);
+    if(state.gameOver) return '本局 ' + fmtDelta(state.gamePoints[color]) + (u ? ' · 悔棋×' + u : '');
+    if(!u) return '';
+    return p === 0 && isHellScoring()
+      ? '悔棋×' + u + ' · 不扣分'
+      : '悔棋×' + u + ' · 结算 -' + p;
+  }
+  function diffLabel(){ return {easy:'简单',medium:'中等',hard:'困难',hell:'地狱'}[state.difficulty]; }
+  function updateClocks(){
+    el.clock1.textContent = fmtTime(state.clocks[1]);
+    el.clock2.textContent = fmtTime(state.clocks[2]);
+  }
+
+  /* ================= 事件绑定 ================= */
+  function bindSegment(id, key, after, parse){
+    var box = document.getElementById(id);
+    box.addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn || !box.contains(btn)) return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      state[key] = parse ? parse(btn.dataset.value) : btn.dataset.value;
+      if(after) after();
+    });
+  }
+
+  bindSegment('segMode', 'mode', function(){
+    var pve = state.mode === 'pve';
+    el.fieldDiff.classList.toggle('hidden', !pve);
+    el.fieldColor.classList.toggle('hidden', !pve);
+    initGame();
+  });
+  function afterDifficultyChange(){
+    if(state.mode==='pve' && !state.gameOver && state.currentPlayer===aiColor()) maybeAiMove();
+    else updateUI();
+  }
+  // 难度切换：地狱难度需先通过免责声明，确认前不改变已生效的难度
+  var diffBox = document.getElementById('segDiff');
+  diffBox.addEventListener('click', function(e){
+    var box = diffBox;
+    var btn = e.target.closest('button');
+    if(!btn || !box.contains(btn)) return;
+    var value = btn.dataset.value;
+    if(value === 'hell'){
+      if(!isHellDialogOpen()) openHellDialog(btn);
+      return;
+    }
+    if(isHellDialogOpen()) closeHellDialog(false);
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    state.difficulty = value;
+    afterDifficultyChange();
+  });
+  bindSegment('segColor', 'humanColor', function(){ initGame(); }, function(v){ return parseInt(v,10); });
+  bindSegment('segFirst', 'firstPlayer', function(){ initGame(); }, function(v){ return parseInt(v,10); });
+  bindSegment('segSize', 'boardSize', function(){ initGame(); }, function(v){ return parseInt(v,10); });
+
+  el.chkForbidden.addEventListener('change', function(){
+    state.forbidden = el.chkForbidden.checked;
+    updateUI(); drawBoard();
+    if(!state.gameOver) setStatus(state.forbidden
+      ? '禁手已开启：黑棋禁止三三、四四、长连'
+      : '禁手已关闭：五连及以上均判胜');
+  });
+
+  // 一级入口：打开弹窗；关闭按钮 / 完成按钮 / 遮罩外部点击 / Esc 均可关闭
+  el.settingsToggle.addEventListener('click', function(){ openSettings(true); });
+  el.settingsClose.addEventListener('click', closeSettings);
+  el.settingsDone.addEventListener('click', closeSettings);
+  el.settingsOverlay.addEventListener('click', function(e){
+    if(e.target === el.settingsOverlay) closeSettings();
+  });
+
+  // 地狱难度免责声明：继续 / 返回选择 / 关闭 / 遮罩外部点击
+  el.hellContinue.addEventListener('click', confirmHell);
+  el.hellBack.addEventListener('click', function(){ closeHellDialog(true); });
+  el.hellClose.addEventListener('click', function(){ closeHellDialog(true); });
+  el.hellOverlay.addEventListener('click', function(e){
+    if(e.target === el.hellOverlay) closeHellDialog(true);
+  });
+
+  el.btnRestart.addEventListener('click', initGame);
+  el.btnUndo.addEventListener('click', undo);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      if(isHellDialogOpen()){ e.preventDefault(); closeHellDialog(true); return; }
+      if(isSettingsOpen()){ e.preventDefault(); closeSettings(); return; }
+    }
+    if((e.ctrlKey || e.metaKey) && (e.key==='z' || e.key==='Z')){
+      e.preventDefault(); undo();
+    }
+  });
+
+  canvas.addEventListener('pointermove', function(e){
+    if(e.pointerType !== 'mouse') return;
+    var cell = eventToCell(e);
+    if(cell && canHumanPlay() && state.board[cell.r][cell.c]===0){ hover = cell; }
+    else hover = null;
+    drawBoard();
+  });
+  canvas.addEventListener('pointerleave', function(){ hover=null; drawBoard(); });
+  canvas.addEventListener('pointerdown', function(e){
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    var cell = eventToCell(e);
+    if(!cell) return;
+    if(!canHumanPlay()) return;
+    placeStone(cell.r, cell.c);
+  });
+
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ resizeCanvas(); }).observe(canvas);
+  }else{
+    window.addEventListener('resize', resizeCanvas);
+  }
+
+  // 计时器
+  setInterval(function(){
+    var now = performance.now();
+    var dt = now - lastTick;
+    lastTick = now;
+    if(!state.gameOver && dt > 0 && dt < 2000){
+      state.clocks[state.currentPlayer] += dt;
+      updateClocks();
+    }
+  }, 250);
+
+  renderScores();
+  applySettingsOpen(readSettingsOpen(), false);
+  initGame();
+})();
+</script>
+</body>
+</html>
