@@ -16,7 +16,6 @@
     --brown-500: #795548;
     --brown-100: #efebe9;
     --brown-50:  #faf7f5;
-    --accent:    #ff9800;
     --shadow-1: 0 1px 3px rgba(0,0,0,.14), 0 1px 2px rgba(0,0,0,.10);
     --shadow-2: 0 3px 8px rgba(0,0,0,.16), 0 1px 3px rgba(0,0,0,.12);
     --shadow-3: 0 8px 22px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.12);
@@ -38,6 +37,29 @@
 
   body.modal-open { overflow: hidden; }
 
+  /* ========================================================
+     变态模式主题：深红色
+     ======================================================== */
+  body.theme-insane {
+    --brown-900: #2a0808;
+    --brown-800: #3d0f0f;
+    --brown-700: #541515;
+    --brown-600: #6b1c1c;
+    --brown-500: #8b1e1e;
+    --brown-100: #f5dcdc;
+    --brown-50:  #fdf5f5;
+    background: linear-gradient(160deg, #f8eaea 0%, #f0d4d4 55%, #e4c0c0 100%);
+    background-attachment: fixed;
+  }
+  body.theme-insane .app-bar {
+    background: linear-gradient(135deg, #3d0f0f 0%, #541515 60%, #6b1c1c 100%);
+    box-shadow: 0 2px 10px rgba(61, 15, 15, .4);
+  }
+  body.theme-insane .brand-mark {
+    color: #ffcdd2;
+  }
+
+  /* ---------- App Bar ---------- */
   .app-bar {
     position: sticky; top: 0; z-index: 40;
     background: linear-gradient(135deg, #4e342e 0%, #5d4037 60%, #6d4c41 100%);
@@ -99,6 +121,7 @@
     box-shadow: 0 0 0 3px rgba(255,213,79,.10);
   }
 
+  /* ---------- Layout ---------- */
   .layout {
     max-width: 1080px;
     margin: 0 auto;
@@ -131,6 +154,7 @@
     background: var(--brown-500);
   }
 
+  /* ---------- Board card ---------- */
   .board-card { padding: 14px 14px 12px; }
 
   .status-bar {
@@ -199,6 +223,11 @@
     color: #c62828;
     box-shadow: 0 0 0 1px rgba(198,40,40,.20);
   }
+  .difficulty-badge.insane {
+    background: #4a0d0d;
+    color: #ffcdd2;
+    box-shadow: 0 0 0 1px rgba(198,40,40,.45);
+  }
 
   .timer {
     display: flex; align-items: center; gap: 6px;
@@ -208,8 +237,18 @@
     background: var(--brown-100);
     padding: 5px 12px; border-radius: 20px;
     flex: 0 0 auto;
+    transition: background .25s, color .25s;
   }
   .timer svg { width: 15px; height: 15px; }
+  .timer.timer-danger {
+    background: #ffcdd2;
+    color: #b71c1c;
+    animation: timerPulse .6s ease-in-out infinite;
+  }
+  @keyframes timerPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
 
   .board-wrap {
     display: flex; justify-content: center;
@@ -232,6 +271,7 @@
     justify-content: center;
   }
 
+  /* ---------- Buttons ---------- */
   .btn {
     font-family: inherit;
     font-size: 14px;
@@ -273,6 +313,7 @@
   }
   .btn-danger:hover:not(:disabled) { background: #b71c1c; box-shadow: 0 5px 14px rgba(198,40,40,.36); }
 
+  /* ---------- Side panel ---------- */
   .side { display: flex; flex-direction: column; gap: 16px; }
 
   .scores {
@@ -298,19 +339,19 @@
     font-variant-numeric: tabular-nums;
     transition: color .2s;
   }
-  .score-round.earned {
-    color: #e67e22;
-    font-weight: 600;
-  }
+  .score-round.earned { color: #e67e22; font-weight: 600; }
   .score-divider { width: 1px; height: 66px; background: #ece4de; margin-top: 6px; flex: 0 0 auto; }
 
   .rules {
     margin: 0; padding-left: 18px;
     font-size: 12.5px; line-height: 1.85; color: #8d7b70;
   }
-  .rules li { margin-bottom: 2px; }
+  .rules li { margin-bottom: 4px; }
+  .rules li:last-child { margin-bottom: 0; }
   .rules li.hell-rule { color: #b23a3a; }
+  .rules li.insane-rule { color: #8b1e1e; font-weight: 600; }
 
+  /* ---------- 设置表单 ---------- */
   .field { margin-bottom: 16px; }
   .field:last-of-type { margin-bottom: 0; }
   .field-label {
@@ -355,8 +396,15 @@
     color: #fff;
     box-shadow: 0 2px 7px rgba(198,40,40,.42);
   }
+  .segmented button.seg-insane { color: #8b1e1e; font-weight: 600; }
+  .segmented button.seg-insane.active {
+    background: #4a0d0d;
+    color: #ffcdd2;
+    box-shadow: 0 2px 7px rgba(74,13,13,.55);
+  }
 
   .segmented-4 button { padding: 9px 2px; }
+  .segmented-5 button { padding: 9px 1px; font-size: 12px; }
 
   .switch-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -380,6 +428,8 @@
   }
   .switch input:checked + .slider { background: var(--brown-500); }
   .switch input:checked + .slider::before { transform: translateX(21px); }
+  .switch input:disabled + .slider { opacity: .7; cursor: not-allowed; }
+  .switch input:disabled:checked + .slider { background: #8b1e1e; }
 
   .rules-block {
     margin-top: 18px;
@@ -403,7 +453,7 @@
     color: #8d7b70;
     list-style: disc;
   }
-  .rules-compact li { margin-bottom: 4px; }
+  .rules-compact li { margin-bottom: 6px; }
   .rules-compact li:last-child { margin-bottom: 0; }
   .rules-compact b {
     color: var(--brown-700);
@@ -412,7 +462,10 @@
   }
   .rules-compact li.hell-rule { color: #b23a3a; }
   .rules-compact li.hell-rule b { color: #c62828; }
+  .rules-compact li.insane-rule { color: #8b1e1e; font-weight: 500; }
+  .rules-compact li.insane-rule b { color: #8b1e1e; }
 
+  /* ---------- 弹窗 ---------- */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -485,9 +538,12 @@
   }
 
   #hellOverlay { z-index: 140; background: rgba(30, 8, 8, .58); }
+  #insaneOverlay { z-index: 150; background: rgba(30, 8, 8, .65); }
 
   .modal-hell .modal-head .card-title { color: #c62828; }
   .modal-hell .modal-head .card-title::before { background: #c62828; }
+  .modal-insane .modal-head .card-title { color: #8b1e1e; }
+  .modal-insane .modal-head .card-title::before { background: #8b1e1e; }
 
   .hell-warning {
     background: linear-gradient(135deg, #fff6f5 0%, #ffecec 100%);
@@ -525,10 +581,29 @@
     border: 1px dashed #ef9a9a;
     border-radius: 10px;
     font-size: 12.5px;
-    line-height: 1.7;
+    line-height: 1.75;
     color: #8d3a3a;
   }
   .hell-bonus b { color: #c62828; }
+  .insane-bonus {
+    margin-top: 10px;
+    padding: 11px 13px;
+    background: #fff;
+    border: 1px dashed #8b1e1e;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #5a1010;
+  }
+  .insane-bonus b { color: #8b1e1e; }
+  .insane-bonus ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  .insane-bonus li {
+    margin-bottom: 3px;
+    line-height: 1.6;
+  }
 
   .hell-actions {
     display: flex;
@@ -537,6 +612,7 @@
   }
   .hell-actions .btn { flex: 0 0 auto; }
 
+  /* ---------- Toast ---------- */
   #toast {
     position: fixed; left: 50%; bottom: 34px;
     transform: translate(-50%, 24px);
@@ -554,12 +630,9 @@
   }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+  /* ---------- Responsive ---------- */
   @media (max-width: 880px) {
-    .layout {
-      grid-template-columns: 1fr;
-      padding: 12px;
-      gap: 12px;
-    }
+    .layout { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
     .app-bar { height: 54px; padding: 0 12px; gap: 8px; }
     .brand h1 { font-size: 15px; }
     .brand-mark { width: 30px; height: 30px; font-size: 15px; }
@@ -576,21 +649,11 @@
   @media (max-width: 600px) {
     .status-bar { gap: 8px; }
     .status-right { gap: 6px; }
-    .difficulty-badge {
-      height: 26px;
-      padding: 0 8px;
-      font-size: 11px;
-    }
-    .timer {
-      padding: 4px 9px;
-      font-size: 14px;
-    }
+    .difficulty-badge { height: 26px; padding: 0 8px; font-size: 11px; }
+    .timer { padding: 4px 9px; font-size: 14px; }
     .timer svg { width: 13px; height: 13px; }
 
-    .modal-overlay {
-      align-items: flex-end;
-      padding: 0;
-    }
+    .modal-overlay { align-items: flex-end; padding: 0; }
     .modal {
       max-width: none;
       max-height: 88vh;
@@ -614,24 +677,18 @@
     .app-bar-btn { padding: 0 10px; }
     .segmented button { font-size: 11.5px; padding: 8px 2px; }
     .segmented-4 button { font-size: 11px; padding: 8px 1px; }
+    .segmented-5 button { font-size: 10.5px; padding: 8px 1px; }
     .score-val { font-size: 22px; }
 
-    .difficulty-badge {
-      height: 24px;
-      padding: 0 7px;
-      font-size: 10.5px;
-    }
-    .timer {
-      padding: 4px 8px;
-      font-size: 13px;
-      gap: 4px;
-    }
+    .difficulty-badge { height: 24px; padding: 0 7px; font-size: 10.5px; }
+    .timer { padding: 4px 8px; font-size: 13px; gap: 4px; }
     .turn { font-size: 14px; gap: 7px; }
     .dot { width: 16px; height: 16px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .modal-overlay.is-open, .modal { animation: none !important; }
+    .timer.timer-danger { animation: none !important; }
     * { transition-duration: .01ms !important; }
   }
 </style>
@@ -661,7 +718,7 @@
       </div>
       <div class="status-right">
         <span class="difficulty-badge normal" id="difficultyBadge" aria-label="当前对局难度">普通</span>
-        <div class="timer">
+        <div class="timer" id="timerBox">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.1.8-1.3-4.5-2.7V7z"/></svg>
           <span id="timerText">00:00</span>
         </div>
@@ -705,15 +762,15 @@
         <li>黑棋先行，任意一方先连成五子即获胜。</li>
         <li>总落子数达到 100 手时自动判为平局。</li>
         <li>开启禁手后，黑棋不得落子于三三、四四、长连点。</li>
-        <li>获胜方每局 +10 分；平局双方各 +5 分。</li>
-        <li>悔棋从本局已获积分中扣 1 分，不扣历史积分。</li>
-        <li class="hell-rule">地狱难度：玩家悔棋不扣分；玩家获胜 +50 分。</li>
-        <li class="hell-rule">地狱难度：玩家失败 -5 分（积分为 0 时不再扣分）；平局双方均不加分；AI 失败不扣分。</li>
+        <li>常规：获胜方 +10 分，平局双方各 +5 分；悔棋扣 1 分（仅扣本局已得积分，不扣历史积分）。</li>
+        <li class="hell-rule">地狱难度：获胜 +30 分，失败 -5 分（积分不低于 0）；悔棋不扣分；平局双方不加分。</li>
+        <li class="insane-rule">变态模式：强制禁手、禁止悔棋、每回合限时 10 秒；超时判负扣 5 分，获胜 +60 分。</li>
       </ul>
     </section>
   </aside>
 </main>
 
+<!-- ============ 对局设置弹窗 ============ -->
 <div class="modal-overlay" id="settingsOverlay" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div class="modal-head">
@@ -734,15 +791,25 @@
         </div>
       </div>
 
+      <div class="field" id="rowPvpMode" style="display:none">
+        <div class="field-label">对局规则</div>
+        <div class="segmented" data-group="pvpMode">
+          <button type="button" data-value="normal" class="active">正常模式</button>
+          <button type="button" data-value="insane" class="seg-insane">变态模式</button>
+        </div>
+        <div class="field-hint">「变态模式」强制禁手、限时 10 秒、禁止悔棋</div>
+      </div>
+
       <div class="field" id="rowDifficulty" style="display:none">
         <div class="field-label">电脑难度</div>
-        <div class="segmented segmented-4" data-group="difficulty">
+        <div class="segmented segmented-5" data-group="difficulty">
           <button type="button" data-value="easy">简单</button>
           <button type="button" data-value="normal" class="active">普通</button>
           <button type="button" data-value="hard">困难</button>
           <button type="button" data-value="hell" class="seg-hell">地狱</button>
+          <button type="button" data-value="insane" class="seg-insane">变态</button>
         </div>
-        <div class="field-hint">「地狱」难度需先确认免责声明</div>
+        <div class="field-hint">「地狱」「变态」需先确认免责声明</div>
       </div>
 
       <div class="field" id="rowFirst" style="display:none">
@@ -765,7 +832,7 @@
       <div class="switch-row">
         <div>
           <div class="field-label" style="margin-bottom:0">禁手规则</div>
-          <div class="field-hint">黑棋三三 / 四四 / 长连禁手（默认关闭）</div>
+          <div class="field-hint">黑棋三三 / 四四 / 长连禁手（默认关闭，变态模式下强制开启）</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="chkForbidden">
@@ -776,17 +843,17 @@
       <div class="rules-block">
         <div class="field-label">积分规则</div>
         <ul class="rules-compact">
-          <li>获胜方每局 <b>+10</b> 分；平局双方各 <b>+5</b> 分。</li>
-          <li>每次悔棋扣 <b>1</b> 分，仅从本局已获得积分中扣除，扣完即止。</li>
-          <li>本局积分为 <b>0</b> 时不再扣分，且不扣除历史积分。</li>
-          <li class="hell-rule">地狱难度：玩家悔棋<b>不扣分</b>；玩家获胜 <b>+50</b> 分；玩家失败 <b>-5</b> 分（积分为 0 时不再扣分）。</li>
-          <li class="hell-rule">地狱难度：平局双方均不加分；AI 失败不扣分。</li>
+          <li>常规：获胜 <b>+10</b> 分，平局各 <b>+5</b> 分。</li>
+          <li>常规：悔棋扣 <b>1</b> 分，仅扣本局已得积分，扣完即止；不扣历史积分。</li>
+          <li class="hell-rule">地狱难度：获胜 <b>+30</b> 分，失败 <b>-5</b> 分（积分不低于 0）；悔棋不扣分；平局双方不加分。</li>
+          <li class="insane-rule">变态模式：强制禁手、禁止悔棋、每回合限时 <b>10 秒</b>；超时判负扣 <b>5</b> 分，获胜 <b>+60</b> 分。</li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ============ 地狱难度免责声明 ============ -->
 <div class="modal-overlay" id="hellOverlay" aria-hidden="true">
   <div class="modal modal-hell" role="alertdialog" aria-modal="true" aria-labelledby="hellTitle">
     <div class="modal-head">
@@ -805,7 +872,7 @@
         <span class="hell-quote">“<b>根本没有这样的人机</b>。”——直到它坐到了你对面。</span>
         <span class="hell-quote">“<b>总算知道柯洁当年有多崩溃了</b>。”</span>
         <div class="hell-bonus">
-          地狱难度规则：你<b>悔棋不扣分</b>；获胜 <b>+50</b> 分；失败 <b>-5</b> 分（积分为 0 时不再扣分）；平局双方均不加分。
+          地狱难度规则：获胜 <b>+30</b> 分，失败 <b>-5</b> 分（积分不低于 0）；玩家悔棋<b>不扣分</b>；平局双方不加分。
         </div>
       </div>
 
@@ -817,15 +884,54 @@
   </div>
 </div>
 
+<!-- ============ 变态模式免责声明 ============ -->
+<div class="modal-overlay" id="insaneOverlay" aria-hidden="true">
+  <div class="modal modal-insane" role="alertdialog" aria-modal="true" aria-labelledby="insaneTitle">
+    <div class="modal-head">
+      <h2 class="card-title" id="insaneTitle">变态模式 · 免责声明</h2>
+      <button class="modal-close" id="btnCloseInsane" type="button" aria-label="关闭免责声明">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="hell-warning" style="background:linear-gradient(135deg,#fff6f5 0%,#f8e8e8 100%);border-color:#e0b0b0">
+        <p style="color:#5a1010"><b>请注意：</b>你即将进入变态模式。所有规则拉满，不留任何容错空间。</p>
+        <p style="color:#5a1010">你需要同时面对强 AI、限时压力与零容错规则，每一步都可能决定胜负。</p>
+        <div class="insane-bonus">
+          <b>变态模式额外规则：</b>
+          <ul>
+            <li>强制启用禁手（黑棋三三 / 四四 / 长连禁手），忽略禁手开关</li>
+            <li>禁止悔棋，悔棋按钮不可用</li>
+            <li>双方每回合必须在 <b>10 秒</b>内落子</li>
+            <li>超时自动判负并 <b>扣 5 分</b></li>
+            <li>获胜方 <b>+60 分</b></li>
+            <li>其余规则沿用默认</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="hell-actions">
+        <button class="btn btn-outline" id="btnInsaneBack" type="button">返回</button>
+        <button class="btn btn-danger" id="btnInsaneContinue" type="button">继续挑战</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
 (function () {
   'use strict';
 
+  /* ========================================================
+     常量
+     ======================================================== */
   const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
-  // 提高棋型评分差距；FIVE_SCORE 保持 1000000
   const WINDOW_SCORE = [0, 1, 35, 900, 100000, 1000000];
   const FIVE_SCORE   = WINDOW_SCORE[5];
   const MAX_MOVES    = 100;
@@ -833,8 +939,11 @@
   const WIN_POINTS        = 10;
   const DRAW_POINTS       = 5;
   const UNDO_COST         = 1;
-  const HELL_WIN_POINTS   = 50;
+  const HELL_WIN_POINTS   = 30;   // 地狱难度获胜 +30
   const HELL_LOSE_PENALTY = 5;
+  const INSANE_WIN_POINTS   = 60;   // 变态模式获胜 +60
+  const INSANE_TIMEOUT_COST = 5;
+  const INSANE_TURN_MS      = 10000;
 
   const SCORE_KEY    = 'guyun_gomoku_scores_v1';
   const SETTINGS_KEY = 'guyun_gomoku_settings_open_v1';
@@ -843,9 +952,13 @@
     easy: '简单',
     normal: '普通',
     hard: '困难',
-    hell: '地狱'
+    hell: '地狱',
+    insane: '变态'
   };
 
+  /* ========================================================
+     状态
+     ======================================================== */
   const state = {
     size: 15,
     board: [],
@@ -853,21 +966,37 @@
     current: 1,
     mode: 'pvp',
     difficulty: 'normal',
+    pvpMode: 'normal',
     firstPlayer: 'human',
     humanColor: 0,
     forbidden: false,
     gameOver: false,
     winner: 0,
     winLine: null,
+    timeoutLoser: 0,
     aiThinking: false,
     roundId: 0,
     scores: { 1: 0, 2: 0 },
     roundPoints: { 1: 0, 2: 0 },
-    timer: { elapsed: 0, startTs: 0, id: null, running: false }
+    timer: { elapsed: 0, startTs: 0, id: null, running: false },
+    turnTimer: { id: null, startTs: 0, remaining: INSANE_TURN_MS, running: false, turnFor: null }
   };
+
+  function isInsane() {
+    if (state.mode === 'pvp') return state.pvpMode === 'insane';
+    return state.difficulty === 'insane';
+  }
 
   function isHellPve() {
     return state.mode === 'pve' && state.difficulty === 'hell';
+  }
+
+  function isForbiddenActive() {
+    return state.forbidden || isInsane();
+  }
+
+  function isStrongAI() {
+    return state.difficulty === 'hell' || state.difficulty === 'insane';
   }
 
   /* ========================================================
@@ -1052,7 +1181,7 @@
   }
 
   /* ========================================================
-     规则判定
+     规则
      ======================================================== */
   function getWinLine(board, x, y, player, size) {
     for (const [dx, dy] of DIRS) {
@@ -1088,9 +1217,7 @@
         else s += '2';
       }
 
-      if (/111111/.test(s)) {
-        return { forbidden: true, reason: '长连禁手' };
-      }
+      if (/111111/.test(s)) return { forbidden: true, reason: '长连禁手' };
       if (/11111/.test(s)) continue;
 
       let f = 0;
@@ -1127,7 +1254,7 @@
 
     const player = state.current;
 
-    if (state.forbidden && player === 1) {
+    if (isForbiddenActive() && player === 1) {
       state.board[y][x] = 1;
       const res = checkForbidden(state.board, x, y, state.size);
       state.board[y][x] = 0;
@@ -1167,19 +1294,51 @@
     draw();
     updateUI();
 
+    if (isInsane() && !state.gameOver) {
+      startTurnTimer();
+    }
+
     if (state.mode === 'pve' && state.current !== state.humanColor && !state.gameOver) {
       scheduleAI();
     }
   }
 
-  function endGame(winner) {
+  /* ========================================================
+     终局结算
+     ======================================================== */
+  function endGame(winner, opts) {
+    opts = opts || {};
     state.gameOver = true;
     state.winner = winner;
     stopTimer();
+    stopTurnTimer();
 
     let gainedText = '';
 
-    if (isHellPve()) {
+    if (isInsane()) {
+      /* ---------- 变态模式 ---------- */
+      if (opts.timeout) {
+        const loser = 3 - winner;
+        state.scores[winner] += INSANE_WIN_POINTS;
+        state.roundPoints[winner] += INSANE_WIN_POINTS;
+        const deduct = Math.min(INSANE_TIMEOUT_COST, Math.max(0, state.scores[loser]));
+        if (deduct > 0) {
+          state.scores[loser] -= deduct;
+        }
+        gainedText = (loser === 1 ? '黑' : '白') + '方超时判负 · ' +
+          (winner === 1 ? '黑' : '白') + '+' + INSANE_WIN_POINTS + ' · ' +
+          (loser === 1 ? '黑' : '白') + '-' + deduct;
+      } else if (winner === 1 || winner === 2) {
+        state.scores[winner] += INSANE_WIN_POINTS;
+        state.roundPoints[winner] += INSANE_WIN_POINTS;
+        gainedText = (winner === 1 ? '黑' : '白') + '方 +' + INSANE_WIN_POINTS + ' 分';
+      } else {
+        state.scores[1] += DRAW_POINTS;
+        state.scores[2] += DRAW_POINTS;
+        gainedText = '双方各 +' + DRAW_POINTS + ' 分';
+      }
+    } else if (isHellPve()) {
+      /* ---------- 地狱模式 ---------- */
       if (winner === 0) {
         gainedText = '地狱难度平局 · 双方均不加分';
       } else if (winner === state.humanColor) {
@@ -1197,6 +1356,7 @@
         }
       }
     } else {
+      /* ---------- 常规模式 ---------- */
       if (winner === 1 || winner === 2) {
         state.roundPoints[winner] += WIN_POINTS;
         state.scores[winner]      += WIN_POINTS;
@@ -1221,7 +1381,11 @@
     }
   }
 
+  /* ========================================================
+     悔棋
+     ======================================================== */
   function undo() {
+    if (isInsane()) { showToast('变态模式禁止悔棋'); return; }
     if (state.aiThinking) return;
     if (state.moves.length === 0) { showToast('当前没有可悔的棋'); return; }
     if (state.gameOver) { showToast('对局已结束，请点击「重新开始」'); return; }
@@ -1265,16 +1429,21 @@
     }
   }
 
+  /* ========================================================
+     重新开始
+     ======================================================== */
   function newRound(silent) {
     state.roundId++;
 
     resetTimer();
+    stopTurnTimer();
 
     state.board = Array.from({ length: state.size }, () => new Array(state.size).fill(0));
     state.moves = [];
     state.gameOver = false;
     state.winner = 0;
     state.winLine = null;
+    state.timeoutLoser = 0;
     state.aiThinking = false;
     state.roundPoints = { 1: 0, 2: 0 };
 
@@ -1286,15 +1455,25 @@
     state.current = 1;
 
     resizeCanvas();
+    applyTheme();
+    updateForbiddenSwitch();
     updateUI();
 
     if (!silent) {
-      if (state.mode === 'pve') {
+      let tip;
+      if (isInsane()) {
+        tip = '变态模式开始 · 限时 10 秒 / 强制禁手 / 禁止悔棋';
+      } else if (state.mode === 'pve') {
         const hellTip = state.difficulty === 'hell' ? ' · 地狱难度' : '';
-        showToast((state.humanColor === 1 ? '新对局开始，你执黑先行' : '新对局开始，电脑执黑先行') + hellTip);
+        tip = (state.humanColor === 1 ? '新对局开始，你执黑先行' : '新对局开始，电脑执黑先行') + hellTip;
       } else {
-        showToast('新对局开始，黑棋先行');
+        tip = '新对局开始，黑棋先行';
       }
+      showToast(tip);
+    }
+
+    if (isInsane()) {
+      startTurnTimer();
     }
 
     if (state.mode === 'pve' && state.current !== state.humanColor) {
@@ -1303,7 +1482,7 @@
   }
 
   /* ========================================================
-     计时器
+     总计时器
      ======================================================== */
   function startTimer() {
     if (state.timer.running) return;
@@ -1311,7 +1490,7 @@
     state.timer.startTs = Date.now() - state.timer.elapsed;
     state.timer.id = setInterval(() => {
       state.timer.elapsed = Date.now() - state.timer.startTs;
-      renderTimer();
+      if (!isInsane()) renderTimer();
     }, 250);
   }
 
@@ -1324,7 +1503,6 @@
       state.timer.elapsed = Date.now() - state.timer.startTs;
       state.timer.running = false;
     }
-    renderTimer();
   }
 
   function resetTimer() {
@@ -1335,14 +1513,69 @@
     state.timer.elapsed = 0;
     state.timer.startTs = 0;
     state.timer.running = false;
+  }
+
+  /* ========================================================
+     回合计时器（变态模式）
+     ======================================================== */
+  function startTurnTimer() {
+    stopTurnTimer();
+    if (!isInsane()) return;
+    if (state.gameOver) return;
+
+    state.turnTimer.startTs = Date.now();
+    state.turnTimer.remaining = INSANE_TURN_MS;
+    state.turnTimer.running = true;
+    state.turnTimer.turnFor = state.current;
+
     renderTimer();
+
+    state.turnTimer.id = setInterval(() => {
+      const elapsed = Date.now() - state.turnTimer.startTs;
+      const remain = Math.max(0, INSANE_TURN_MS - elapsed);
+      state.turnTimer.remaining = remain;
+      renderTimer();
+
+      if (remain <= 0) {
+        stopTurnTimer();
+        handleTurnTimeout();
+      }
+    }, 100);
+  }
+
+  function stopTurnTimer() {
+    if (state.turnTimer.id) {
+      clearInterval(state.turnTimer.id);
+      state.turnTimer.id = null;
+    }
+    state.turnTimer.running = false;
+  }
+
+  function handleTurnTimeout() {
+    if (state.gameOver) return;
+    const loser = state.turnTimer.turnFor;
+    if (!loser) return;
+    state.timeoutLoser = loser;
+    endGame(3 - loser, { timeout: true });
   }
 
   function renderTimer() {
-    const total = Math.floor(state.timer.elapsed / 1000);
-    const m = String(Math.floor(total / 60)).padStart(2, '0');
-    const s = String(total % 60).padStart(2, '0');
-    document.getElementById('timerText').textContent = m + ':' + s;
+    const el = document.getElementById('timerText');
+    const box = document.getElementById('timerBox');
+    if (!el) return;
+
+    if (isInsane()) {
+      const remain = state.turnTimer.remaining;
+      const secs = Math.max(0, Math.ceil(remain / 1000));
+      el.textContent = '00:' + String(secs).padStart(2, '0');
+      if (box) box.classList.toggle('timer-danger', state.turnTimer.running && secs <= 5);
+    } else {
+      const total = Math.floor(state.timer.elapsed / 1000);
+      const m = String(Math.floor(total / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      el.textContent = m + ':' + s;
+      if (box) box.classList.remove('timer-danger');
+    }
   }
 
   /* ========================================================
@@ -1406,7 +1639,6 @@
     return out;
   }
 
-  /** 统计在 (x,y) 落下 player 后，player 能立即成五的落点数量 */
   function countPlayerWinPoints(board, player, size, limit) {
     const cands = getCandidates(board, size);
     let count = 0;
@@ -1423,7 +1655,7 @@
   }
 
   /* ========================================================
-     地狱前瞻
+     强 AI 前瞻
      ======================================================== */
   function hellLookahead(ai, human, size, board) {
     const hCands = getCandidates(board, size);
@@ -1435,35 +1667,32 @@
       return { x: hc.x, y: hc.y, atk, def, total: atk + def * 0.95 };
     });
     hScored.sort((a, b) => b.total - a.total);
-    const hTop = hScored.slice(0, 10);
+    const hTop = hScored.slice(0, 8);
 
     let worst = Infinity;
 
     for (const hc of hTop) {
-      // 人类直接连五 → 这步 AI 棋极差
       board[hc.y][hc.x] = human;
       if (getWinLine(board, hc.x, hc.y, human, size)) {
+        board[hc.y][hc.x] = 0;
+        return -FIVE_SCORE * 20;
+      }
+
+      if (countPlayerWinPoints(board, human, size, 2) >= 2) {
         board[hc.y][hc.x] = 0;
         return -FIVE_SCORE * 10;
       }
 
-      // 人类落子后形成双重威胁（活四）→ 几乎必败
-      if (countPlayerWinPoints(board, human, size, 2) >= 2) {
-        board[hc.y][hc.x] = 0;
-        return -FIVE_SCORE * 5;
-      }
-
-      let aiBest = -Infinity;
       const aCands = getCandidates(board, size);
       const aScored = aCands.map(ac => {
         const atk = pointScore(board, ac.x, ac.y, ai, size);
         const def = pointScore(board, ac.x, ac.y, human, size);
-        return { x: ac.x, y: ac.y, atk, def, total: atk + def * 0.95 };
+        return { x: ac.x, y: ac.y, atk, def, total: atk + def * 1.08 };
       });
       aScored.sort((a, b) => b.total - a.total);
-      let aTop = aScored.slice(0, 10);
+      let aTop = aScored.slice(0, 8);
 
-      if (state.forbidden && ai === 1) {
+      if (isForbiddenActive() && ai === 1) {
         aTop = aTop.filter(ac => {
           board[ac.y][ac.x] = 1;
           const r = checkForbidden(board, ac.x, ac.y, size);
@@ -1472,14 +1701,18 @@
         });
       }
 
+      let aiBest = -Infinity;
       for (const ac of aTop) {
         board[ac.y][ac.x] = ai;
         let v;
         if (getWinLine(board, ac.x, ac.y, ai, size)) {
-          v = FIVE_SCORE * 2;
+          v = FIVE_SCORE * 20;
+        } else if (countPlayerWinPoints(board, ai, size, 2) >= 2) {
+          v = FIVE_SCORE * 10;
         } else {
-          v = pointScore(board, ac.x, ac.y, ai, size)
-            - pointScore(board, ac.x, ac.y, human, size) * 1.08;
+          const atk = pointScore(board, ac.x, ac.y, ai, size);
+          const def = pointScore(board, ac.x, ac.y, human, size);
+          v = atk - def * 1.10;
         }
         board[ac.y][ac.x] = 0;
         if (v > aiBest) aiBest = v;
@@ -1487,7 +1720,7 @@
 
       board[hc.y][hc.x] = 0;
 
-      const val = (aiBest === -Infinity) ? -FIVE_SCORE * 5 : aiBest;
+      const val = (aiBest === -Infinity) ? -FIVE_SCORE * 10 : aiBest;
       if (val < worst) worst = val;
     }
 
@@ -1505,7 +1738,7 @@
 
     let cands = getCandidates(board, size);
 
-    if (state.forbidden && ai === 1) {
+    if (isForbiddenActive() && ai === 1) {
       cands = cands.filter(c => {
         board[c.y][c.x] = 1;
         const r = checkForbidden(board, c.x, c.y, size);
@@ -1529,9 +1762,7 @@
       return { x: c.x, y: c.y, atk, def, total: 0 };
     });
 
-    /* ============ 关键修复：用 getWinLine 精确检测 ============ */
-
-    // 1. AI 若能立即成五 → 直接赢
+    /* ---------- 通用：直接赢 / 直接堵 ---------- */
     for (const c of scored) {
       board[c.y][c.x] = ai;
       const win = getWinLine(board, c.x, c.y, ai, size);
@@ -1539,7 +1770,6 @@
       if (win) return c;
     }
 
-    // 2. 人类下一手能成五 → 必须堵（若为活四则无法阻止，但优先堵 atk 最大的点）
     const humanWinPoints = [];
     for (const c of scored) {
       board[c.y][c.x] = human;
@@ -1559,9 +1789,7 @@
       if (Math.random() < 0.32) {
         return cands[Math.floor(Math.random() * cands.length)];
       }
-      scored.forEach(s => {
-        s.total = s.atk * 0.8 + s.def * 0.45 + Math.random() * 120;
-      });
+      scored.forEach(s => { s.total = s.atk * 0.8 + s.def * 0.45 + Math.random() * 120; });
       scored.sort((a, b) => b.total - a.total);
       const top = scored.slice(0, Math.min(3, scored.length));
       return top[Math.floor(Math.random() * top.length)];
@@ -1569,9 +1797,7 @@
 
     /* ---------- 普通 ---------- */
     if (diff === 'normal') {
-      scored.forEach(s => {
-        s.total = s.atk + s.def * 0.85 + Math.random() * 6;
-      });
+      scored.forEach(s => { s.total = s.atk + s.def * 0.85 + Math.random() * 6; });
       scored.sort((a, b) => b.total - a.total);
       return scored[0];
     }
@@ -1587,32 +1813,32 @@
 
       for (const c of top) {
         board[c.y][c.x] = ai;
-
         if (getWinLine(board, c.x, c.y, ai, size)) {
           board[c.y][c.x] = 0;
           return c;
         }
-
         let oppBest = 0;
         const hCands = getCandidates(board, size);
         for (const hc of hCands) {
           const s = pointScore(board, hc.x, hc.y, human, size);
           if (s > oppBest) oppBest = s;
         }
-
         board[c.y][c.x] = 0;
-
         const val = c.atk + c.def * 0.6 - oppBest * 0.85;
-        if (val > bestVal) {
-          bestVal = val;
-          best = c;
-        }
+        if (val > bestVal) { bestVal = val; best = c; }
       }
       return best;
     }
 
-    /* ---------- 地狱 ---------- */
-    // 额外检查：人类是否即将形成双重威胁（活四）？若是，必须提前阻止
+    /* ---------- 地狱 / 变态 ---------- */
+
+    for (const c of scored) {
+      board[c.y][c.x] = ai;
+      const alive = countPlayerWinPoints(board, ai, size, 2) >= 2;
+      board[c.y][c.x] = 0;
+      if (alive) return c;
+    }
+
     const urgentDefense = [];
     for (const c of scored) {
       board[c.y][c.x] = human;
@@ -1628,26 +1854,20 @@
 
     scored.forEach(s => { s.total = s.atk + s.def * 1.08; });
     scored.sort((a, b) => b.total - a.total);
-    const aiTop = scored.slice(0, Math.min(16, scored.length));
+    const aiTop = scored.slice(0, Math.min(12, scored.length));
 
     let best = aiTop[0];
     let bestVal = -Infinity;
 
     for (const c of aiTop) {
       board[c.y][c.x] = ai;
-
       if (getWinLine(board, c.x, c.y, ai, size)) {
         board[c.y][c.x] = 0;
         return c;
       }
-
       const val = hellLookahead(ai, human, size, board);
       board[c.y][c.x] = 0;
-
-      if (val > bestVal) {
-        bestVal = val;
-        best = c;
-      }
+      if (val > bestVal) { bestVal = val; best = c; }
     }
     return best;
   }
@@ -1658,7 +1878,7 @@
     const round = state.roundId;
     updateUI();
 
-    const wait = state.difficulty === 'hell' ? 420 : 340;
+    const wait = isStrongAI() ? 420 : 340;
 
     setTimeout(() => {
       if (round !== state.roundId) return;
@@ -1672,8 +1892,24 @@
   }
 
   /* ========================================================
-     UI
+     主题 / 设置 UI
      ======================================================== */
+  function applyTheme() {
+    document.body.classList.toggle('theme-insane', isInsane());
+  }
+
+  function updateForbiddenSwitch() {
+    const chk = document.getElementById('chkForbidden');
+    if (!chk) return;
+    if (isInsane()) {
+      chk.checked = true;
+      chk.disabled = true;
+    } else {
+      chk.checked = state.forbidden;
+      chk.disabled = false;
+    }
+  }
+
   function updateDifficultyBadge() {
     const badge = document.getElementById('difficultyBadge');
     if (!badge) return;
@@ -1682,8 +1918,13 @@
     let cls = 'difficulty-badge';
 
     if (state.mode === 'pvp') {
-      text = '人人';
-      cls += ' pvp';
+      if (state.pvpMode === 'insane') {
+        text = '变态';
+        cls += ' insane';
+      } else {
+        text = '人人';
+        cls += ' pvp';
+      }
     } else {
       const key = state.difficulty || 'normal';
       text = DIFFICULTY_LABELS[key] || '普通';
@@ -1718,6 +1959,7 @@
     }
 
     updateDifficultyBadge();
+    updateForbiddenSwitch();
 
     document.getElementById('scoreBlack').textContent = state.scores[1];
     document.getElementById('scoreWhite').textContent = state.scores[2];
@@ -1733,19 +1975,23 @@
       rw.classList.toggle('earned', state.roundPoints[2] > 0);
     }
 
-    document.getElementById('btnUndo').disabled =
-      state.moves.length === 0 || state.gameOver || state.aiThinking;
+    const undoDisabled = state.moves.length === 0 || state.gameOver || state.aiThinking || isInsane();
+    document.getElementById('btnUndo').disabled = undoDisabled;
+    document.getElementById('btnUndo').title = isInsane() ? '变态模式禁止悔棋' : '';
 
     renderTimer();
   }
 
+  /* ========================================================
+     Toast
+     ======================================================== */
   let toastTimer = null;
   function showToast(msg) {
     const el = document.getElementById('toast');
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 2100);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
   /* ========================================================
@@ -1777,7 +2023,8 @@
   function syncBodyLock() {
     const anyOpen =
       document.getElementById('settingsOverlay').classList.contains('is-open') ||
-      document.getElementById('hellOverlay').classList.contains('is-open');
+      document.getElementById('hellOverlay').classList.contains('is-open') ||
+      document.getElementById('insaneOverlay').classList.contains('is-open');
     document.body.classList.toggle('modal-open', anyOpen);
   }
 
@@ -1821,17 +2068,16 @@
     }
   }
 
+  /* ---- 地狱弹窗 ---- */
   let hellPending = null;
 
   function openHellModal(pending) {
     const overlay = document.getElementById('hellOverlay');
     if (!overlay) return;
-
     hellPending = pending;
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
     syncBodyLock();
-
     setTimeout(() => {
       const btn = document.getElementById('btnHellContinue');
       if (btn) btn.focus({ preventScroll: true });
@@ -1841,18 +2087,48 @@
   function closeHellModal(restoreFocus) {
     const overlay = document.getElementById('hellOverlay');
     if (!overlay || !overlay.classList.contains('is-open')) return;
-
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
     hellPending = null;
     syncBodyLock();
-
     if (restoreFocus) {
       const btn = document.getElementById('btnSettingsToggle');
       if (btn) btn.focus({ preventScroll: true });
     }
   }
 
+  /* ---- 变态弹窗 ---- */
+  let insanePending = null;
+
+  function openInsaneModal(pending) {
+    const overlay = document.getElementById('insaneOverlay');
+    if (!overlay) return;
+    insanePending = pending;
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    syncBodyLock();
+    setTimeout(() => {
+      const btn = document.getElementById('btnInsaneContinue');
+      if (btn) btn.focus({ preventScroll: true });
+    }, 90);
+  }
+
+  function closeInsaneModal(restoreFocus) {
+    const overlay = document.getElementById('insaneOverlay');
+    if (!overlay || !overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    insanePending = null;
+    syncBodyLock();
+    if (restoreFocus) {
+      const btn = document.getElementById('btnSettingsToggle');
+      if (btn) btn.focus({ preventScroll: true });
+    }
+  }
+
+  /* ========================================================
+     设置项应用
+     ======================================================== */
   function applySegment(group, btn, g, v) {
     group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -1866,13 +2142,15 @@
       updateSettingVisibility();
       newRound(true);
       showToast(v === 'pve' ? '已切换为人机对战' : '已切换为人人对战');
+    } else if (g === 'pvpMode') {
+      state.pvpMode = v;
+      newRound(true);
+      showToast(v === 'insane' ? '变态模式已启用' : '正常模式已启用');
     } else if (g === 'difficulty') {
       state.difficulty = v;
-      if (v === 'hell') {
-        showToast('地狱难度已启用 · 胜 +50 / 负 -5 / 平 0');
-      } else {
-        showToast('电脑难度：' + btn.textContent.trim());
-      }
+      if (v === 'hell') showToast('地狱难度已启用 · 胜 +30 / 负 -5 / 平 0');
+      else if (v === 'insane') showToast('变态难度已启用 · 胜 +60 / 超时 -5 / 限时 10 秒');
+      else showToast('电脑难度：' + btn.textContent.trim());
       newRound(true);
     } else if (g === 'first') {
       state.firstPlayer = v;
@@ -1916,7 +2194,12 @@
         const v = btn.dataset.value;
 
         if (g === 'difficulty' && v === 'hell') {
-          openHellModal({ group, btn });
+          openHellModal({ group, btn, type: g });
+          return;
+        }
+
+        if ((g === 'difficulty' && v === 'insane') || (g === 'pvpMode' && v === 'insane')) {
+          openInsaneModal({ group, btn, type: g });
           return;
         }
 
@@ -1925,6 +2208,7 @@
     });
 
     document.getElementById('chkForbidden').addEventListener('change', function () {
+      if (isInsane()) return;
       state.forbidden = this.checked;
       showToast(this.checked ? '禁手规则已开启' : '禁手规则已关闭');
       newRound(true);
@@ -1951,13 +2235,21 @@
     });
   }
 
+  function updateSettingVisibility() {
+    const isPve = state.mode === 'pve';
+    document.getElementById('rowDifficulty').style.display = isPve ? '' : 'none';
+    document.getElementById('rowFirst').style.display = isPve ? '' : 'none';
+    document.getElementById('rowPvpMode').style.display = isPve ? 'none' : '';
+  }
+
   function initModals() {
     const settingsOverlay = document.getElementById('settingsOverlay');
     const settingsBtn = document.getElementById('btnSettingsToggle');
     const settingsCloseBtn = document.getElementById('btnCloseSettings');
     const hellOverlay = document.getElementById('hellOverlay');
+    const insaneOverlay = document.getElementById('insaneOverlay');
 
-    if (!settingsOverlay || !settingsBtn || !hellOverlay) return;
+    if (!settingsOverlay || !settingsBtn || !hellOverlay || !insaneOverlay) return;
 
     let saved = null;
     try { saved = localStorage.getItem(SETTINGS_KEY); } catch (e) { /* ignore */ }
@@ -1988,6 +2280,7 @@
       settingsModalEl.addEventListener('click', function (e) { e.stopPropagation(); });
     }
 
+    /* ---- 地狱弹窗按钮 ---- */
     const btnHellBack = document.getElementById('btnHellBack');
     const btnHellContinue = document.getElementById('btnHellContinue');
     const btnCloseHell = document.getElementById('btnCloseHell');
@@ -1997,47 +2290,86 @@
         const pending = hellPending;
         closeHellModal(false);
         if (pending) {
-          applySegment(pending.group, pending.btn, 'difficulty', 'hell');
+          applySegment(pending.group, pending.btn, pending.type, 'hell');
         }
       });
     }
-
     if (btnHellBack) {
       btnHellBack.addEventListener('click', function () {
         closeHellModal(true);
         showToast('已取消地狱难度，可重新选择难度');
       });
     }
-
     if (btnCloseHell) {
       btnCloseHell.addEventListener('click', function () {
         closeHellModal(true);
         showToast('已取消地狱难度，可重新选择难度');
       });
     }
-
     hellOverlay.addEventListener('click', function (e) {
       if (e.target === hellOverlay) {
         closeHellModal(true);
         showToast('已取消地狱难度，可重新选择难度');
       }
     });
-
     const hellModalEl = hellOverlay.querySelector('.modal');
     if (hellModalEl) {
       hellModalEl.addEventListener('click', function (e) { e.stopPropagation(); });
     }
 
+    /* ---- 变态弹窗按钮 ---- */
+    const btnInsaneBack = document.getElementById('btnInsaneBack');
+    const btnInsaneContinue = document.getElementById('btnInsaneContinue');
+    const btnCloseInsane = document.getElementById('btnCloseInsane');
+
+    if (btnInsaneContinue) {
+      btnInsaneContinue.addEventListener('click', function () {
+        const pending = insanePending;
+        closeInsaneModal(false);
+        if (pending) {
+          applySegment(pending.group, pending.btn, pending.type, 'insane');
+        }
+      });
+    }
+    if (btnInsaneBack) {
+      btnInsaneBack.addEventListener('click', function () {
+        closeInsaneModal(true);
+        showToast('已取消变态模式，可重新选择');
+      });
+    }
+    if (btnCloseInsane) {
+      btnCloseInsane.addEventListener('click', function () {
+        closeInsaneModal(true);
+        showToast('已取消变态模式，可重新选择');
+      });
+    }
+    insaneOverlay.addEventListener('click', function (e) {
+      if (e.target === insaneOverlay) {
+        closeInsaneModal(true);
+        showToast('已取消变态模式，可重新选择');
+      }
+    });
+    const insaneModalEl = insaneOverlay.querySelector('.modal');
+    if (insaneModalEl) {
+      insaneModalEl.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
+
+    /* ---- 统一 Esc 关闭 ---- */
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape' && e.keyCode !== 27) return;
 
+      if (insaneOverlay.classList.contains('is-open')) {
+        e.preventDefault();
+        closeInsaneModal(true);
+        showToast('已取消变态模式，可重新选择');
+        return;
+      }
       if (hellOverlay.classList.contains('is-open')) {
         e.preventDefault();
         closeHellModal(true);
         showToast('已取消地狱难度，可重新选择难度');
         return;
       }
-
       if (settingsOverlay.classList.contains('is-open')) {
         e.preventDefault();
         setPanelOpen(false, { persist: true, restoreFocus: true });
@@ -2045,12 +2377,9 @@
     });
   }
 
-  function updateSettingVisibility() {
-    const isPve = state.mode === 'pve';
-    document.getElementById('rowDifficulty').style.display = isPve ? '' : 'none';
-    document.getElementById('rowFirst').style.display = isPve ? '' : 'none';
-  }
-
+  /* ========================================================
+     启动
+     ======================================================== */
   function init() {
     loadScores();
     state.board = Array.from({ length: state.size }, () => new Array(state.size).fill(0));
@@ -2061,6 +2390,8 @@
     bindEvents();
     initModals();
     updateSettingVisibility();
+    applyTheme();
+    updateForbiddenSwitch();
     resizeCanvas();
     updateUI();
   }
