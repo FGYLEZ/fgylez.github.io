@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="FGYL Home">
+    <meta name="keywords" content="FGYL,Homepage">
+    <meta name="author" content="FGYL">
+    <title>鬼云站🤣FGYL</title>
+    <script type="text/javascript">
+    (function () {
+        'use strict';
+
+        var finished = false;   // 点击“好的”后置为 true，页面被清空
+        var dialogOpen = false; // 提示框是否正在显示
+        var dialog = null;
+        var okBtn = null;
+
+        // 判断是否为我们生成的提示框内部元素
+        function isDialogPart(el) {
+            return !!dialog && (el === dialog || dialog.contains(el));
+        }
+
+        // 判断元素是否可见（隐藏元素不计入可销毁范围）
+        function isVisible(el) {
+            var node = el;
+            while (node && node.nodeType === 1) {
+                var cs = window.getComputedStyle(node);
+                if (!cs || cs.display === 'none' || cs.visibility === 'hidden') return false;
+                node = node.parentElement;
+            }
+            return true;
+        }
+
+        // 统计 body 中剩余的可见原始元素（排除提示框自身）
+        function remainingCount() {
+            if (!document.body) return 0;
+            var all = document.body.querySelectorAll('*');
+            var count = 0;
+            for (var i = 0; i < all.length; i++) {
+                var el = all[i];
+                if (isDialogPart(el)) continue;
+                if (isVisible(el)) count++;
+            }
+            return count;
+        }
+
+        // 显示“最后一个元素被销毁”提示框
+        function showDialog() {
+            if (dialogOpen || finished) return;
+            dialogOpen = true;
+
+            dialog = document.createElement('div');
+            dialog.id = '__destroy_dialog__';
+            dialog.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+                'z-index:2147483647;background:#ffffff;color:#222222;border:1px solid #cccccc;' +
+                'border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.3);padding:30px 40px;' +
+                'min-width:260px;text-align:center;font-family:system-ui,-apple-system,"Microsoft YaHei",sans-serif;' +
+                'font-size:18px;line-height:1.6;';
+
+            var msg = document.createElement('div');
+            msg.textContent = '恭喜你滚木了！';
+            msg.style.cssText = 'margin-bottom:22px;font-size:18px;color:#222222;';
+
+            okBtn = document.createElement('button');
+            okBtn.type = 'button';
+            okBtn.textContent = '好的';
+            okBtn.style.cssText = 'cursor:pointer;padding:8px 28px;font-size:16px;color:#ffffff;' +
+                'background:#409eff;border:0;border-radius:4px;line-height:1.5;';
+
+            dialog.appendChild(msg);
+            dialog.appendChild(okBtn);
+            (document.body || document.documentElement).appendChild(dialog);
+        }
+
+        // 关闭提示框并清空页面，只剩空白
+        function finish() {
+            finished = true;
+            dialogOpen = false;
+            dialog = null;
+            okBtn = null;
+            document.body.innerHTML = '';
+            document.body.style.cssText = 'margin:0;padding:0;background:#ffffff;';
+            document.documentElement.style.background = '#ffffff';
+        }
+
+        // 统一处理：先阻断原有交互，再销毁被点击的元素
+        function onActivate(target) {
+            if (finished) return;
+
+            if (dialogOpen) {
+                if (target === okBtn) finish();
+                return;
+            }
+
+            if (!target || target.nodeType !== 1) return;
+            if (target === document.documentElement || target === document.body) return;
+            if (isDialogPart(target)) return;
+
+            if (target.parentNode) target.parentNode.removeChild(target);
+            if (remainingCount() === 0) showDialog();
+        }
+
+        // 在捕获阶段最前拦截，禁用所有原有点击交互（链接、onclick、外部脚本等）
+        window.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            onActivate(e.target);
+        }, true);
+
+        // 禁用键盘对链接/按钮的激活，避免绕过点击拦截
+        window.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var t = e.target;
+            if (!t || (t.tagName !== 'A' && t.tagName !== 'BUTTON')) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            onActivate(t);
+        }, true);
+
+        // 禁用表单提交等默认行为
+        window.addEventListener('submit', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }, true);
+    })();
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/dmego-home-page@latest/assets/css/onlinewebfonts.css"/>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/dmego-home-page@latest/assets/css/vno.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/dmego-home-page@latest/assets/css/iconfont.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/dmego-home-page@latest/assets/css/wakatime-theme.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/remixicon@4.9.0/fonts/remixicon.css">
+    <link rel="apple-touch-icon" href="https://unpkg.com/dmego-home-page@latest/apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico">
+</head>
+
+<body>
+    <span class="mobile btn-mobile-menu">
+        <i class="social iconfont icon-list btn-mobile-menu__icon"></i>
+        <i class="social iconfont icon-angleup btn-mobile-close__icon hidden"></i>
+    </span>
+    <header id="panel" class="panel-cover">
+        <div class="panel-main">
+            <div class="panel-main__inner panel-inverted">
+                <div class="panel-main__content">
+                    <div class="ih-item circle effect right_to_left">            
+                        <a href="#" title="" class="blog-button">
+                            <div class="img"><img src="https://i.imgs.ovh/2026/11/14/84ca7d3c01d6a42b981f2f1a9b57617e.png" alt="img" class="js-avatar iUp profilepic"></div>
+                            <div class="info iUp">
+                                <div class="info-back">
+                                    <h2> 
+                                        
+                                             ?这你翻我?
+                                        
+                                    </h2>
+                                    <p>
+                                        
+                                            2078 · 狂怒
+                                        
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <h1 class="panel-cover__title panel-title iUp">
+                        <a href="#" title="FGYL Home">FGYL</a>
+                    </h1>
+                    <p class="panel-cover__subtitle panel-subtitle iUp">人生苦短，何不耍起？</p>
+                    <hr class="panel-cover__divider iUp" />
+                    <p id="description" class="panel-cover__description iUp">如何得与凉风约, 不共尘沙一并来!
+                        <br/>
+                        <strong>-「中牟道中」</strong>
+                    </p>
+                    <div class="navigation-wrapper iUp">
+                        <div>
+                            <nav class="cover-navigation cover-navigation--primary">
+                                <ul class="navigation">
+                                    <li class="navigation__item">
+                                        <a href="/" class="blog-button">主页</a>
+                                    </li>
+                                    <li class="navigation__item">
+                                        <a href="project/" class="blog-button">项目</a>
+                                    </li>
+                                    <li class="navigation__item">
+                                        <a href="others/" class="blog-button">梦境</a>
+                                    </li>
+                                    <li class="navigation__item">
+                                        <a href="about/" class="blog-button">关于</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="iUp">
+                            <nav class="cover-navigation navigation--social">
+                                <ul class="navigation">
+                                    <li class="navigation__item">
+                                        <a href="https://github.com/FGYLEZ" title="github" target="_blank">
+                                            <i class='social iconfont icon-github'></i>
+                                            <span class="label">github</span>
+                                        </a>
+                                    </li>
+                                    <li class="navigation__item">
+                                        <a title="234484598" target="_blank" onclick="showWeChatModal();">
+                                            <i class="ri-qq-fill" style="font-size: 23px;"></i>
+                                            <span class="label">QQ</span>
+                                        </a>
+                                    </li>
+
+                                    <li class="navigation__item">
+                                        <a href="https://space.bilibili.com/2032968323/" title="bilibili" target="_blank">
+                                            <i class='ri-bilibili-fill' style="font-size: 23px;"></i>
+                                            <span class="label">bilibili</span>
+                                        </a>
+                                    </li>
+                                    <li class="navigation__item">
+                                        <!-- 加密的邮箱地址, 请自行修改, 或者改用下方的明文方式 -->
+                                        <a href="javascript:decryptEmail('Zmd5MjAxMUBvdXRsb29rLmNvbQ==');" title="email">
+                                        <!-- <a href="test@test.com" title="email"> -->
+                                            <i class='social iconfont icon-email'></i>
+                                            <span class="label">email</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-cover--overlay cover-slate"></div>
+        </div>
+        <!-- <div class="beian iUp">
+            <a class="icp" href="http://www.miitbeian.gov.cn/publish/query/indexFirst.action" target="_blank">XXX</a>
+            <a class="gwab" href="http://www.beian.gov.cn/portal/recordQuery" target="_blank">XXX</a>
+        </div> -->
+        <div class="remark iUp">
+            <p class="power">Powered By 
+                <a href="https://github.com/features/actions" target="_blank"> GitHub Actions </a> And 
+                <a href="https://hitokoto.cn/" target="_blank"> Hitokoto </a>
+            </p>
+        </div>
+    </header>
+    <!-- WeChat Modal -->
+    <div id="wechatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; opacity: 0; visibility: hidden; transition: opacity 0.3s ease;" onclick="closeWeChatModal()">
+        <img src="./assets/img/wechat.jpg" alt="WeChat" style="max-width: 300px; max-height: 300px; border-radius: 10px;" onclick="event.stopPropagation()">
+    </div>
+    <script type="text/javascript" src="https://unpkg.com/dmego-home-page@latest/assets/js/main.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/dmego-home-page@latest/assets/js/theme-loader.js"></script>
+</body>
+</html>
